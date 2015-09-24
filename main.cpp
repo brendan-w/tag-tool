@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <string>
-#include <string.h> // strcmp()
+#include <string.h> // strcmp() strchr()
 #include <vector>
 #include <unordered_set>
 #include <stdlib.h> // realpath()
@@ -12,7 +12,7 @@
 bool verbose = false;
 
 
-const char* TAG_DELIMS = " ._-+&%%()[]{}";
+const char* TAG_DELIMS = " .,_-+&%%()[]{}";
 const char DEFAULT_TAG_DELIM = '_';
 
 
@@ -83,12 +83,45 @@ static std::string add_tag(std::string str, Tag tag)
 
 static std::string remove_tag(std::string str, Tag tag)
 {
-    size_t pos;
-    while( (pos = str.find(tag)) != std::string::npos )
+    size_t pos = 0;
+
+    while( (pos = str.find(tag, pos)) != std::string::npos )
     {
+        //check that we're not matching a substring of another tag
+        //by checking for delimeters (or string edges) on either side
+        //of the find() pos
+
+        //if there's text on the left...
+        if(pos > 0)
+        {
+            char left_char = str.at(pos - 1);
+            //if the previous character ISN'T a delimeter, then
+            //this is a substring, and not a real match
+            if(strchr(TAG_DELIMS, left_char) == NULL)
+            {
+                //push the search position forward,
+                //to avoid hitting this match again
+                pos += tag.length();
+                continue;
+            }
+        }
+
+        //same logic as above, but looking on the right side of the match
+        if(pos < (str.length() - tag.length()))
+        {
+            char right_char = str.at(pos + tag.length());
+            if(strchr(TAG_DELIMS, right_char) == NULL)
+            {
+                pos += tag.length();
+                continue;
+            }
+        }
+
+        //wipe the tag from the string
         str.erase(pos, tag.length());
 
-        //remove the delimeter
+        //now that we've removed the tag, there may be multiple
+        //delimeters back-to-back. remove the extra delimeter.
         if(str.length() > 0)
         {
             if(pos >= str.length())
