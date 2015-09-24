@@ -94,16 +94,19 @@ static std::string remove_tag(std::string str, Tag tag)
         str.erase(pos, tag.length());
 
         //remove the delimeter
-        if(pos >= str.length())
+        if(str.length() > 0)
         {
-            //this tag was at the end of the filename
-            str.erase(pos - 1, 1);
-        }
-        else
-        {
-            //this tag was NOT at the end of the filename
-            //erase the forward delimeter
-            str.erase(pos, 1);
+            if(pos >= str.length())
+            {
+                //this tag was at the end of the filename
+                str.erase(pos - 1, 1);
+            }
+            else
+            {
+                //this tag was NOT at the end of the filename
+                //erase the forward delimeter
+                str.erase(pos, 1);
+            }
         }
     }
 
@@ -136,6 +139,9 @@ static void run(TagSet add_tags, TagSet remove_tags, FileSet files)
             if(tags.find(t) != tags.end())
                 p.name = remove_tag(p.name, t);
         }
+
+        if(p.name == "")
+            p.name = "unknown";
 
         File new_f = join_path_parts(p);
 
