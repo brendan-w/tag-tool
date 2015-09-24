@@ -1,6 +1,24 @@
 
+#include <fstream>
+#include <sys/stat.h> //stat()
+
 #include "utils.h"
 
+
+bool dir_exists(const char* path)
+{
+    struct stat st;
+    if(stat(path, &st) == 0)
+        if((st.st_mode & S_IFDIR) != 0)
+            return true;
+    return false;
+}
+
+bool file_exists(const char* filename)
+{
+    std::ifstream fin(filename);
+    return fin;
+}
 
 std::vector<std::string> split(std::string & str, std::string delims)
 {

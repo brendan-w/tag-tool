@@ -1,12 +1,15 @@
 
 #include <iostream>
-#include <fstream>
 #include <string>
+#include <string.h> // strcmp()
 #include <vector>
 #include <unordered_set>
 #include <stdlib.h> // realpath()
 
 #include "utils.h"
+
+
+bool verbose = false;
 
 
 const char* TAG_DELIMS = " ._-+&%%()[]{}";
@@ -21,19 +24,8 @@ typedef std::unordered_set<File> FileSet;
 
 
 
-static bool file_exists(const char* filename)
-{
-    std::ifstream fin(filename);
-    return fin;
-}
-
-
 static bool move_file(File path, File dest)
 {
-    //bail, if there's nothing to do
-    if(path == dest)
-        return true;
-
     //look for a collision
     if(file_exists(dest.c_str()))
     {
@@ -62,6 +54,9 @@ static bool move_file(File path, File dest)
         perror(path.c_str());
         return false;
     }
+
+    if(verbose)
+        std::cout << dest << std::endl;
 
     return true;
 }
@@ -145,7 +140,8 @@ static void run(TagSet add_tags, TagSet remove_tags, FileSet files)
 
         File new_f = join_path_parts(p);
 
-        move_file(f, new_f);
+        if(f != new_f)
+            move_file(f, new_f);
     }
 }
 
@@ -154,11 +150,15 @@ static void help()
 {
     std::cout << "\
 Usage:\n\
-\ttag [COMMAND...] [FILE...]\n\
+\ttag [OPTION...] [COMMAND...] [FILE...]\n\
 \n\
 Commands:\n\
 \t+[TAG]   adds a tag to the given files\n\
 \t-[TAG]   removes a tag from the given files\n\
+\n\
+Options:\n\
+\t--verbose   prints the new filepath for each renamed file\n\
+\t--help      prints this help text and exits\n\
 \n\
 For issues and documentation: https://github.com/brendanwhitfield/tag-tool\n";
 }
@@ -166,20 +166,32 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool\n";
 
 int main(int argc, char* argv[])
 {
-    if(argc <= 2)
+    if(argc < 3) //3 is the min number of args for something to happen
     {
         help();
-        return -1;
+        return 0;
     }
-    else
-    {
-        TagSet add_tags;
-        TagSet remove_tags;
-        FileSet files;
 
-        for(int i = 1; i < argc; i++)
+    TagSet add_tags;
+    TagSet remove_tags;
+    FileSet files;
+
+    //parse command line arguments
+    for(int i = 1; i < argc; i++)
+    {
+        //look for option switches
+        if(strcmp(argv[i], "--help") == 0)
         {
-            //look for a plus or a minus sign
+            help();
+            return 0;
+        }
+        else if(strcmp(argv[i], "--verbose") == 0)
+        {
+            verbose = true;
+        }
+        else
+        {
+            //look for a plus or a minus sign, denoting tag operations
             switch(argv[i][0])
             {
                 case '+':
@@ -196,9 +208,24 @@ int main(int argc, char* argv[])
                         std::cerr << argv[i] << " is not a file" << std::endl;
             }
         }
-
-        run(add_tags, remove_tags, files);
     }
+
+    //check if any files were specified
+    if(files.size() == 0)
+    {
+        std::cerr << "Please specify files to be tagged (use --help for more info)" << std::endl;
+        return -1;
+    }
+
+    //check if any tag operations were specified
+    if(add_tags.size() + remove_tags.size() == 0)
+    {
+        std::cerr << "Please specify a tag operation (use --help for more info)" << std::endl;
+        return -1;
+    }
+
+    //tag the files
+    run(add_tags, remove_tags, files);
 
 	return 0;
 }

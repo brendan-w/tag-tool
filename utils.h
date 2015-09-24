@@ -24,7 +24,8 @@ typedef struct {
 } Path_Parts;
 
 
-
+bool dir_exists(const char* path);
+bool file_exists(const char* filename);
 std::vector<std::string> split(std::string & str, std::string delims);
 std::string path_join(std::string a_str, std::string b_str);
 Path_Parts get_path_parts(std::string path);
