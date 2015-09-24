@@ -3,8 +3,9 @@
 
 # files and paths
 
-HEADERS = 
-OBJ     = main.o
+HEADERS = utils.h
+OBJ     = main.o \
+          utils.o
 
 
 

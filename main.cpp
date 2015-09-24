@@ -5,6 +5,11 @@
 #include <vector>
 #include <unordered_set>
 
+#include "utils.h"
+
+
+const char* tag_delim = " ._-+&%%()[]{}";
+
 
 typedef std::string Tag;
 typedef std::unordered_set<Tag> TagSet;
@@ -14,33 +19,28 @@ typedef std::unordered_set<File> FileSet;
 
 
 
-
-std::vector<std::string> split(std::string & str, std::string delims)
+static TagSet get_tags(std::string f)
 {
-    std::vector<std::string> parts;
+    std::vector<std::string> tag_list = split(f, tag_delim);
 
-    size_t prev = 0;
-    size_t pos = 0;
+    //strain out duplicates
+    TagSet tags;
+    for(Tag t: tag_list)
+        tags.insert(t);
 
-    //while there is another delimeter
-    while((pos = str.find_first_of(delims, prev)) != std::string::npos)
-    {
-        if(pos > prev)
-            parts.push_back(str.substr(prev, pos-prev));
-
-        prev = pos + 1;
-    }
-
-    //add the last tag to the set
-    if(prev < str.length())
-        parts.push_back(str.substr(prev, std::string::npos));
-
-    return parts;
+    return tags;
 }
 
-static void add_tag(std::string tag, std::string filepath)
+
+static void run(TagSet add_tags, TagSet remove_tags, FileSet files)
 {
-    std::cout << filepath << std::endl;
+    for(File f : files)
+    {
+        Path_Parts p = get_path_parts(f);
+
+        //find out what tags this file already has
+        TagSet tags = get_tags(p.name);
+    }
 }
 
 
@@ -56,7 +56,6 @@ Commands:\n\
 \n\
 For issues and documentation: https://github.com/brendanwhitfield/collector\n";
 }
-
 
 
 int main(int argc, char* argv[])
@@ -94,6 +93,8 @@ int main(int argc, char* argv[])
             help();
             return -1;
         }
+
+        run(add_tags, remove_tags, files);
     }
 
 	return 0;
