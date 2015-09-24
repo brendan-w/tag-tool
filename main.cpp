@@ -41,6 +41,37 @@ static TagSet get_tags(std::string f)
 }
 
 
+static std::string add_tag(std::string str, Tag tag)
+{
+    return tag + DEFAULT_TAG_DELIM + str;
+}
+
+
+static std::string remove_tag(std::string str, Tag tag)
+{
+    size_t pos;
+    while( (pos = str.find(tag)) != std::string::npos )
+    {
+        str.erase(pos, tag.length());
+
+        //remove the delimeter
+        if(pos >= str.length())
+        {
+            //this tag was at the end of the filename
+            str.erase(pos - 1, 1);
+        }
+        else
+        {
+            //this tag was NOT at the end of the filename
+            //erase the forward delimeter
+            str.erase(pos, 1);
+        }
+    }
+
+    return str;
+}
+
+
 static void run(TagSet add_tags, TagSet remove_tags, FileSet files)
 {
     for(File f : files)
@@ -55,9 +86,15 @@ static void run(TagSet add_tags, TagSet remove_tags, FileSet files)
         {
             //if the file doesn't have this tag
             if(tags.find(t) == tags.end())
-            {
-                p.name = t + DEFAULT_TAG_DELIM + p.name;
-            }
+                p.name = add_tag(p.name, t);
+        }
+
+        //remove tags
+        for(Tag t : remove_tags)
+        {
+            //if the file already has this tag
+            if(tags.find(t) != tags.end())
+                p.name = remove_tag(p.name, t);
         }
 
         File new_f = join_path_parts(p);
@@ -104,6 +141,7 @@ int main(int argc, char* argv[])
                     break;
                 case '-':
                     remove_tags.insert( Tag(argv[i]+1) );
+                    add_tags.erase(     Tag(argv[i]+1) ); //dont add AND remove the same tag
                     break;
                 default:
                     if(file_exists(argv[i]))
