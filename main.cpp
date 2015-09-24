@@ -160,7 +160,7 @@ Commands:\n\
 \t+[TAG]   adds a tag to the given files\n\
 \t-[TAG]   removes a tag from the given files\n\
 \n\
-For issues and documentation: https://github.com/brendanwhitfield/collector\n";
+For issues and documentation: https://github.com/brendanwhitfield/tag-tool\n";
 }
 
 
