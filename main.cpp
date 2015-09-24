@@ -62,6 +62,12 @@ static bool move_file(File path, File dest)
 }
 
 
+static inline bool is_delim(char c)
+{
+    return (strchr(TAG_DELIMS, c) != NULL);
+}
+
+
 static TagSet get_tags(std::string f)
 {
     std::vector<std::string> tag_list = split(f, TAG_DELIMS);
@@ -97,7 +103,7 @@ static std::string remove_tag(std::string str, Tag tag)
             char left_char = str.at(pos - 1);
             //if the previous character ISN'T a delimeter, then
             //this is a substring, and not a real match
-            if(strchr(TAG_DELIMS, left_char) == NULL)
+            if(!is_delim(left_char))
             {
                 //push the search position forward,
                 //to avoid hitting this match again
@@ -110,7 +116,7 @@ static std::string remove_tag(std::string str, Tag tag)
         if(pos < (str.length() - tag.length()))
         {
             char right_char = str.at(pos + tag.length());
-            if(strchr(TAG_DELIMS, right_char) == NULL)
+            if(!is_delim(right_char))
             {
                 pos += tag.length();
                 continue;
