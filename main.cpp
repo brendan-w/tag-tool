@@ -28,6 +28,45 @@ static bool file_exists(const char* filename)
 }
 
 
+static bool move_file(File path, File dest)
+{
+    //bail, if there's nothing to do
+    if(path == dest)
+        return true;
+
+    //look for a collision
+    if(file_exists(dest.c_str()))
+    {
+        //as long as there's a collision, try adding "(i)" to the filename
+        Path_Parts p = get_path_parts(dest);
+
+        size_t i = 1;
+        std::string new_dest;
+
+        do
+        {
+            Path_Parts new_p = p;
+            p.name += "(" + std::to_string(i) + ")";
+            new_dest = join_path_parts(new_p);
+            i++;
+        }
+        while(file_exists(new_dest.c_str()));
+
+        dest = new_dest;
+    }
+
+    //try the rename
+    if(rename(path.c_str(), dest.c_str()))
+    {
+        //failure
+        perror(path.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+
 static TagSet get_tags(std::string f)
 {
     std::vector<std::string> tag_list = split(f, TAG_DELIMS);
@@ -71,7 +110,8 @@ static std::string remove_tag(std::string str, Tag tag)
     return str;
 }
 
-
+//this function assumes that add_tags and remove_tags are
+//disjoint sets, and that all files exist
 static void run(TagSet add_tags, TagSet remove_tags, FileSet files)
 {
     for(File f : files)
@@ -99,7 +139,7 @@ static void run(TagSet add_tags, TagSet remove_tags, FileSet files)
 
         File new_f = join_path_parts(p);
 
-        std::cout << "new name = " << new_f << std::endl;
+        move_file(f, new_f);
     }
 }
 
