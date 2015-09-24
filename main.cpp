@@ -1,10 +1,10 @@
 
-#include <iostream>
-#include <string>
+#include <stdlib.h> // realpath()
 #include <string.h> // strcmp() strchr()
+#include <string>
+#include <iostream>
 #include <vector>
 #include <unordered_set>
-#include <stdlib.h> // realpath()
 
 #include "utils.h"
 
@@ -23,6 +23,25 @@ typedef std::string File;
 typedef std::unordered_set<File> FileSet;
 
 
+
+//returns the path to the nearest directory containing a .tagdir file
+static std::string get_tag_dir(std::string dir)
+{
+    std::string test = path_join(dir, ".tagdir");
+
+    if(file_exists(test.c_str()))
+    {
+        return test;
+    }
+    else
+    {
+        //if we're at the root, and it still doesn't exist, stop
+        if(dir == "/")
+            return "";
+        else
+            return get_tag_dir(parent_dir(dir));
+    }
+}
 
 static bool move_file(File path, File dest)
 {
@@ -205,6 +224,8 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool\n";
 
 int main(int argc, char* argv[])
 {
+    std::cout << get_tag_dir(getcwd(NULL, 0)) << std::endl;
+
     if(argc < 3) //3 is the min number of args for something to happen
     {
         help();

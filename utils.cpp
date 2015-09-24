@@ -1,5 +1,7 @@
 
+#include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <sys/stat.h> //stat()
 
 #include "utils.h"
@@ -18,6 +20,23 @@ bool file_exists(const char* filename)
 {
     std::ifstream fin(filename);
     return fin;
+}
+
+//TODO: make this cross-platform
+std::string parent_dir(std::string dir)
+{
+    //remove the last directory
+    size_t pos = dir.rfind(PATH_SEP);
+    if(pos == std::string::npos)
+        return "";
+
+    dir = dir.erase(pos);
+
+    //for when the root gets erased
+    if(dir.length() == 0)
+        dir = "/";
+
+    return dir;
 }
 
 std::vector<std::string> split(std::string & str, std::string delims)
