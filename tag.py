@@ -30,6 +30,14 @@ Options:
 For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 """
 
+# testing harness for changing settings
+def test_options(root, dirs):
+    global root_dir
+    global use_dirs
+    root_dir = root
+    use_dirs = dirs
+
+
 # recursively finds the nearest .tagdir file denoting the limit for moving files
 def find_above(path, filename):
     if os.path.isfile(os.path.join(path, filename)):
@@ -118,29 +126,33 @@ def resolve_dirs(path_parts):
     return path_parts
 
 
+# parses tags for a single file, and returns a new filename
+def run_for_file(add_tags, remove_tags, f):
+
+    path_parts = f_split(f)
+
+    # remove the requested tags
+    for tag in remove_tags:
+        path_parts = remove(tag, path_parts)
+
+    current_tags = get_tags(path_parts)
+
+    # add the requested tags, if they're not already there
+    for tag in add_tags:
+        if tag and tag not in current_tags:
+            path_parts = add(tag, path_parts)
+
+    # reposition the file in the tree, favoring tags on directories
+    if use_dirs:
+        path_parts = resolve_dirs(path_parts)
+
+    return f_join(path_parts)
+
+
 def run(add_tags, remove_tags, files):
     for f in files:
-        f = os.path.abspath(f)
         print(f)
-        path_parts = f_split(f)
-
-        # remove the requested tags
-        for tag in remove_tags:
-            path_parts = remove(tag, path_parts)
-
-        current_tags = get_tags(path_parts)
-
-        # add the requested tags, if they're not already there
-        for tag in add_tags:
-            if tag not in current_tags:
-                path_parts = add(tag, path_parts)
-
-        # reposition the file in the tree, favoring tags on directories
-        if use_dirs:
-            path_parts = resolve_dirs(path_parts)
-
-        new_f = f_join(path_parts)
-        print(new_f)
+        print(run_file(add_tags, remove_tags, f))
 
 
 def main():
@@ -164,7 +176,7 @@ def main():
             elif option[0] == "-":
                 remove_tags.add(option[1:]);
             elif os.path.isfile(option):
-                files.add(option)
+                files.add(os.path.abspath(option))
             else:
                 print("'%s' is not a valid file or command line option" % option)
 
@@ -181,7 +193,6 @@ def main():
 
     # run the tagger
     run(add_tags, remove_tags, files)
-
 
 
 if(__name__ == "__main__"):
