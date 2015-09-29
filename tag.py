@@ -11,8 +11,8 @@ PathParts = namedtuple('PathParts', 'dirs name ext')
 verbose = True
 root_dir = ""
 use_dirs = False
-#tag_delims = "[ \\.,_-+&%%\\(\\)\\[\\]\\{\\}]"
 tag_delims = "[ \\.,_&%%\\-\\+\\(\\)\\[\\]\\{\\}]"
+default_delim = "_"
 
 
 help_text = """
@@ -32,56 +32,103 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 
 # recursively finds the nearest .tagdir file denoting the limit for moving files
 def find_above(path, filename):
-
-    f = os.path.join(path, filename)
-
-    if os.path.isfile(f):
+    if os.path.isfile(os.path.join(path, filename)):
         return path
     else:
         if path == "/":
             return ""
         else:
-            find_above(os.path.dirname(path), filename)
+            return find_above(os.path.dirname(path), filename)
+
+
+# splits an absolute file into an instance of PathParts
+def f_split(f):
+    # split out the dirs, the filename, and the extension
+    dirs, f   = os.path.split(f)
+    name, ext = os.path.splitext(f)
+
+    # if dirs are being used, do NOT consider the path
+    # to the root tag directory
+    if use_dirs:
+        dirs = os.path.relpath(dirs, root_dir)
+
+    return PathParts(dirs, name, ext)
+
+
+# reassemble a PathParts struct back into a filename
+def f_join(path_parts):
+    path = path_parts.dirs
+    filename = path_parts.name + path_parts.ext
+
+    # if a root dir was used, resolve the reference
+    if use_dirs:
+        path = os.path.join(root_dir, path)
+
+    return os.path.join(path, filename)
+
+
+# returns a set of each tag on this file
+def get_tags(path_parts):
+    tags = set(re.split(tag_delims, f))
+
+    if use_dirs:
+        tags.union(set(re.split(tag_delims, f)))
+
+    return set(filter(bool, tags)) # strain out empty strings
+
+
+def add(tag, path_parts):
+    return PathParts(path_parts.dirs,
+                     tag + default_delim + path_parts.name,
+                     path_parts.ext)
 
 
 def remove(tag, path_parts):
+    name = path_parts.name
+    dirs = path_parts.dirs
 
     # remove tags from the name
-
     # run as 3 different regexes for simplicity
     front_pattern = "^" + tag + tag_delims
     back_pattern  = tag_delims + tag + "$"
     mid_pattern   = ("(?<=%s)" % tag_delims) + tag + tag_delims
 
-    print(path_parts.name)
-
-    n = re.sub(front_pattern, "", path_parts.name)
-    n = re.sub(back_pattern, "", n)
-    n = re.sub(mid_pattern, "", n)
-
-    print(n)
+    # erase any tag instances from the name
+    name = re.sub(front_pattern, "", name)
+    name = re.sub(back_pattern, "", name)
+    name = re.sub(mid_pattern, "", name)
 
     # remove tags from the dirs
     if use_dirs:
         pass
 
+    return PathParts(dirs, name, path_parts.ext)
+
+
+# Only used if use_dirs == True
+# Sinks a file back down the directory tree, according to its tags
+# Directories are favored as tag storage
+def place(path_parts):
+    return path_parts
 
 
 def run(add_tags, remove_tags, files):
     for f in files:
         f = os.path.abspath(f)
-
-        # split out the dirs, the filename, and the extension
-        dirs, f   = os.path.split(f)
-        name, ext = os.path.splitext(f)
-
-        path_parts = PathParts(dirs, name, ext)
+        print(f)
+        path_parts = f_split(f)
 
         for tag in remove_tags:
-            remove(tag, path_parts)
+            path_parts = remove(tag, path_parts)
 
+        for tag in add_tags:
+            path_parts = add(tag, path_parts)
 
+        if use_dirs:
+            path_parts = place(path_parts)
 
+        new_f = f_join(path_parts)
+        print(new_f)
 
 
 def main():
