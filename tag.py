@@ -11,7 +11,7 @@ PathParts = namedtuple('PathParts', 'dirs name ext')
 verbose = True
 root_dir = ""
 use_dirs = False
-tag_delims = "[ \\.,_&%%\\-\\+\\(\\)\\[\\]\\{\\}]"
+tag_delims = "[ \\/.,_&%%\\-\\+\\(\\)\\[\\]\\{\\}]"
 default_delim = "_"
 
 
@@ -67,16 +67,19 @@ def f_join(path_parts):
     return os.path.join(path, filename)
 
 
-# returns a set of each tag on this file
+# returns a set of tags on this file
 def get_tags(path_parts):
-    tags = set(re.split(tag_delims, f))
+    tags = set(re.split(tag_delims, path_parts.name))
 
     if use_dirs:
-        tags.union(set(re.split(tag_delims, f)))
+        tags.union(set(re.split(tag_delims, path_parts.dirs)))
 
     return set(filter(bool, tags)) # strain out empty strings
 
 
+# adds a tag to this file's name
+# if there is a dir to encode this tag, it will be removed from
+# the filename in the place() function
 def add(tag, path_parts):
     return PathParts(path_parts.dirs,
                      tag + default_delim + path_parts.name,
@@ -100,15 +103,18 @@ def remove(tag, path_parts):
 
     # remove tags from the dirs
     if use_dirs:
-        pass
+        dirs = re.sub(front_pattern, "", dirs)
+        dirs = re.sub(back_pattern, "", dirs)
+        dirs = re.sub(mid_pattern, "", dirs)
 
     return PathParts(dirs, name, path_parts.ext)
 
 
 # Only used if use_dirs == True
 # Sinks a file back down the directory tree, according to its tags
-# Directories are favored as tag storage
-def place(path_parts):
+# Directories are favored as tag storage. Also handles deletion of tags
+# from dir names carrying multiple tags
+def resolve_dirs(path_parts):
     return path_parts
 
 
@@ -118,14 +124,20 @@ def run(add_tags, remove_tags, files):
         print(f)
         path_parts = f_split(f)
 
+        # remove the requested tags
         for tag in remove_tags:
             path_parts = remove(tag, path_parts)
 
-        for tag in add_tags:
-            path_parts = add(tag, path_parts)
+        current_tags = get_tags(path_parts)
 
+        # add the requested tags, if they're not already there
+        for tag in add_tags:
+            if tag not in current_tags:
+                path_parts = add(tag, path_parts)
+
+        # reposition the file in the tree, favoring tags on directories
         if use_dirs:
-            path_parts = place(path_parts)
+            path_parts = resolve_dirs(path_parts)
 
         new_f = f_join(path_parts)
         print(new_f)
