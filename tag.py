@@ -13,6 +13,7 @@ root_dir = ""
 use_dirs = False
 tag_delims = "[ \\/.,_&%%\\-\\+\\(\\)\\[\\]\\{\\}]"
 default_delim = "_"
+no_tags_filename = "unknown"
 
 
 help_text = """
@@ -47,6 +48,11 @@ def find_above(path, filename):
             return ""
         else:
             return find_above(os.path.dirname(path), filename)
+
+
+# lists only directories at the given path
+def dirs_at(path):
+    return [ name for name in os.listdir(path) if os.isdir(os.path.join(path, name)) ]
 
 
 # splits an absolute file into an instance of PathParts
@@ -100,20 +106,27 @@ def remove(tag, path_parts):
 
     # remove tags from the name
     # run as 3 different regexes for simplicity
+    mid_pattern   = ("(?<=%s)" % tag_delims) + tag + tag_delims
     front_pattern = "^" + tag + tag_delims
     back_pattern  = tag_delims + tag + "$"
-    mid_pattern   = ("(?<=%s)" % tag_delims) + tag + tag_delims
+    only_pattern  = "^" + tag + "$"
 
     # erase any tag instances from the name
+
+    # WARNING: the order here is important. Deleting tags from the front or the
+    # back will cause inner tags to become front or back tags. This causes
+    # problems if there are two of the same tag adjacent to one-another.
+    name = re.sub(mid_pattern, "", name)
     name = re.sub(front_pattern, "", name)
     name = re.sub(back_pattern, "", name)
-    name = re.sub(mid_pattern, "", name)
+    name = re.sub(only_pattern, no_tags_filename, name)
 
     # remove tags from the dirs
     if use_dirs:
+        dirs = re.sub(mid_pattern, "", dirs)
         dirs = re.sub(front_pattern, "", dirs)
         dirs = re.sub(back_pattern, "", dirs)
-        dirs = re.sub(mid_pattern, "", dirs)
+        dirs = re.sub(only_pattern, "", dirs)
 
     return PathParts(dirs, name, path_parts.ext)
 
@@ -128,7 +141,7 @@ def resolve_dirs(path_parts):
 
 # parses tags for a single file, and returns a new filename
 def run_for_file(add_tags, remove_tags, f):
-
+    # return "/home/brendan/tag-tool/unknown.txt"
     path_parts = f_split(f)
 
     # remove the requested tags
