@@ -214,7 +214,7 @@ def run_for_file(add_tags, remove_tags, f):
 def run(add_tags, remove_tags, files):
     for f in files:
         print(f)
-        print(run_file(add_tags, remove_tags, f))
+        print(run_for_file(add_tags, remove_tags, f))
 
 
 def main():
