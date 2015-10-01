@@ -208,8 +208,6 @@ def run_for_file(add_tags, remove_tags, f):
     if use_dirs:
         path_parts = resolve_dirs(path_parts)
 
-    print(path_parts)
-
     return f_join(path_parts)
 
 
