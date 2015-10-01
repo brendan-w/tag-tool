@@ -97,49 +97,6 @@ def get_all_tags(path_parts):
     return tags
 
 
-# recursive function that determines the filepath that encodes the most
-# of the given tagset.
-def find_best_path(path, tags):
-
-    best_path = path
-    best_tags_left = set(tags) # goal is to minimize len() for this
-
-    # search all of the directories at the current path
-    for d in dirs_at(os.path.join(root_dir, path)):
-
-        d_tags = get_tags(d)
-
-        # if the tags of the directory name are all tags that we're looking for...
-        if all([t in tags for t in d_tags]):
-            # we've found a valid dir to put the file in
-            
-            # prepare to recurse by removing the tags consumed by this dir name
-            next_tags = set(tags).difference(d_tags)
-
-            # recurse
-            r = find_best_path(os.path.join(path, d), next_tags)
-
-            # check to see if a better score was achieved
-            if(len(r[1]) < len(best_tags_left)):
-                best_path      = r[0]
-                best_tags_left = r[1]
-
-        # skip directories that contain tags we AREN'T looking for 
-
-    return (best_path, best_tags_left)
-
-
-# Only used if use_dirs == True
-# Sinks a file back down the directory tree, according to its tags
-# Directories are favored as tag storage. Also handles deletion of tags
-# from dir names carrying multiple tags
-def resolve_dirs(path_parts):
-    # this is really just a launcher for the recursive function above
-    tags = get_all_tags(path_parts)
-    r = find_best_path(root_dir, tags)
-    return PathParts(r[0], path_parts.name, path_parts.ext)
-
-
 # adds a tag to this file's name
 # if there is a dir to encode this tag, it will be removed from
 # the filename in the place() function
@@ -180,6 +137,56 @@ def remove(tag, path_parts):
     return PathParts(dirs, name, path_parts.ext)
 
 
+# recursive function that determines the filepath that encodes the most
+# of the given tagset.
+def find_best_path(path, tags):
+
+    best_path = path
+    best_tags_left = set(tags) # goal is to minimize len() for this
+
+    # search all of the directories at the current path
+    for d in dirs_at(os.path.join(root_dir, path)):
+
+        d_tags = get_tags(d)
+
+        # if the tags of the directory name are all tags that we're looking for
+        if all([t in tags for t in d_tags]):
+            # we've found a valid dir to put the file in
+            
+            # prepare to recurse by removing the tags consumed by this dir name
+            next_tags = set(tags).difference(d_tags)
+
+            # recurse
+            r = find_best_path(os.path.join(path, d), next_tags)
+
+            # check to see if a better score was achieved
+            if(len(r[1]) < len(best_tags_left)):
+                best_path      = r[0]
+                best_tags_left = r[1]
+
+        # skip directories that contain tags we AREN'T looking for 
+
+    return (best_path, best_tags_left)
+
+
+# Only used if use_dirs == True
+# Sinks a file back down the directory tree, according to its tags
+# Directories are favored as tag storage. Also handles deletion of tags
+# from dir names carrying multiple tags
+def resolve_dirs(path_parts):
+    tags = get_all_tags(path_parts)
+
+    # recurse to find the best directory path for this tagset
+    path, remaining_tags = find_best_path(root_dir, tags)
+
+    # find out which tags were handled by directories
+    # and remove them from the filename
+    for tag in tags.difference(remaining_tags):
+        path_parts = remove(tag, path_parts)
+
+    return PathParts(path, path_parts.name, path_parts.ext)
+
+
 # parses tags for a single file, and returns a new filename
 def run_for_file(add_tags, remove_tags, f):
     # return "/home/brendan/tag-tool/unknown.txt"
@@ -196,9 +203,12 @@ def run_for_file(add_tags, remove_tags, f):
         if tag and tag not in current_tags:
             path_parts = add(tag, path_parts)
 
-    # reposition the file in the tree, favoring tags on directories
-    # if use_dirs:
-        # path_parts = resolve_dirs(path_parts)
+    # reposition the file in the tree, favoring tags
+    # in the form of directory names
+    if use_dirs:
+        path_parts = resolve_dirs(path_parts)
+
+    print(path_parts)
 
     return f_join(path_parts)
 
