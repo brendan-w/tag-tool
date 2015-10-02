@@ -3,17 +3,22 @@
 
 import sys
 
+
+find_cmd = "find . -type f -path \"*\" ! -path \"*/.*\" ! -perm -o=x";
+
+
+
 help_text = """
 Usage:
 \ttag-find [OPTION...] [SELECTOR...]
 
 Selectors:
-\t[TAG]    filters tagged files for this tag          ("AND")
-\t+[TAG]   adds tagged files to the selection         ("OR")
-\t-[TAG]   removes tagged files from the selection    ("NOT")
+\t[TAG]    filters tagged files for this tag         ("AND")
+\t+[TAG]   adds tagged files to the selection        ("OR")
+\t-[TAG]   removes tagged files from the selection   ("NOT")
 
 Options:
-\t--help      prints this help text and exits
+\t--help   prints this help text and exits
 
 For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 """
