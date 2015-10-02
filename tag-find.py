@@ -13,7 +13,7 @@ INCLUSION    = 1
 EXCLUSION    = 2
 
 
-find_cmd = "find . -type f %s ! -path \"*/.*\" ! -perm -o=x";
+find_cmd = "find . -type f %s ! -path */.* ! -perm -o=x";
 
 
 
@@ -44,16 +44,16 @@ def find_base_files(operations):
 
     for op in operations:
         if op.type == INCLUSION:
-            cmd_str += " -path \"*%s*\"" % op.tag
+            cmd_str += " -path *%s*" % op.tag
         elif op.type == EXCLUSION:
-            cmd_str += " ! -path \"*%s*\"" % op.tag
+            cmd_str += " ! -path *%s*" % op.tag
 
     # insert the selection flags into the find command
     cmd = find_cmd % cmd_str
 
     # run the find
     try:
-        b = subprocess.check_output(["find", ".", "-name", "*"], universal_newlines=True)
+        b = subprocess.check_output(cmd.split(), universal_newlines=True)
         files = b.split()
         return files
     except subprocess.CalledProcessError:
