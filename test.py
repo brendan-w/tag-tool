@@ -7,7 +7,7 @@ cwd = os.getcwd()
 
 
 # DON'T use_dirs
-test_options(cwd, False)
+test_options(cwd, True, False)
 
 
 assert(run_for_file(
@@ -24,7 +24,7 @@ assert(run_for_file(
 
 
 # use_dirs
-test_options(cwd, True)
+test_options(cwd, True, True)
 
 assert(run_for_file(
   set([]), #add_tags

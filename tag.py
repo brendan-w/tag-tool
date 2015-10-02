@@ -10,8 +10,9 @@ PathParts = namedtuple('PathParts', 'dirs name ext')
 # options
 verbose = True
 root_dir = ""
+use_name = True
 use_dirs = False
-tag_delims = "[ \\/.,_&%%\\-\\+\\(\\)\\[\\]\\{\\}]"
+tag_delims = "[ \\/.,_&=%%\\-\\+\\(\\)\\[\\]\\{\\}]"
 default_delim = "_"
 no_tags_filename = "unknown"
 
@@ -32,10 +33,12 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 """
 
 # testing harness for changing settings
-def test_options(root, dirs):
+def test_options(root, name, dirs):
     global root_dir
+    global use_name
     global use_dirs
     root_dir = root
+    use_name = name
     use_dirs = dirs
 
 
@@ -89,7 +92,11 @@ def get_tags(s):
 
 # returns a set of tags on this file
 def get_all_tags(path_parts):
-    tags = get_tags(path_parts.name)
+
+    tags = set()
+
+    if use_name:
+        tags.union(get_tags(path_parts.name))
 
     if use_dirs:
         tags.union(get_tags(path_parts.dirs))
@@ -112,20 +119,21 @@ def remove(tag, path_parts):
 
     # remove tags from the name
     # run as different regexes for simplicity
+
+    # WARNING: the order here is important. Deleting tags from the front or the
+    # back will cause inner tags to become front or back tags. This causes
+    # problems if there are two of the same tag adjacent to one-another.
     mid_pattern   = ("(?<=%s)" % tag_delims) + tag + tag_delims
     front_pattern = "^" + tag + tag_delims
     back_pattern  = tag_delims + tag + "$"
     only_pattern  = "^" + tag + "$"
 
     # erase any tag instances from the name
-
-    # WARNING: the order here is important. Deleting tags from the front or the
-    # back will cause inner tags to become front or back tags. This causes
-    # problems if there are two of the same tag adjacent to one-another.
-    name = re.sub(mid_pattern, "", name)
-    name = re.sub(front_pattern, "", name)
-    name = re.sub(back_pattern, "", name)
-    name = re.sub(only_pattern, no_tags_filename, name)
+    if use_name:
+        name = re.sub(mid_pattern, "", name)
+        name = re.sub(front_pattern, "", name)
+        name = re.sub(back_pattern, "", name)
+        name = re.sub(only_pattern, no_tags_filename, name)
 
     # remove tags from the dirs
     if use_dirs:
@@ -251,6 +259,7 @@ def main():
         return
 
     root_dir = find_above(os.getcwd(), ".tagdir")
+    use_name = True  # could eventually be disabled by an option
     use_dirs = (root_dir != "") # could eventually be disabled by an option
 
     # run the tagger
