@@ -32,8 +32,11 @@ def test_options(root, name, dirs):
 # if there is a dir to encode this tag, it will be removed from
 # the filename in the place() function
 def add(tag, path_parts):
+    if path_parts.name != "":
+        tag += settings.default_delim
+
     return PathParts(path_parts.dirs,
-                     tag + settings.default_delim + path_parts.name,
+                     tag + path_parts.name,
                      path_parts.ext)
 
 
@@ -57,7 +60,7 @@ def remove(tag, path_parts):
         name = re.sub(mid_pattern, "", name)
         name = re.sub(front_pattern, "", name)
         name = re.sub(back_pattern, "", name)
-        name = re.sub(only_pattern, settings.no_tags_filename, name)
+        name = re.sub(only_pattern, "", name)
 
     # remove tags from the dirs
     if settings.use_dirs:
@@ -139,6 +142,9 @@ def run_for_file(add_tags, remove_tags, f):
     # in the form of directory names
     if settings.use_dirs:
         path_parts = resolve_dirs(path_parts)
+
+    if path_parts.name == "":
+        path_parts.name = settings.no_tags_filename
 
     return f_join(path_parts)
 
