@@ -180,9 +180,11 @@ def main():
         print("please specify a tag operation")
         return
 
-    # settings.root_dir = find_above(os.getcwd(), ".tagdir")
-    # settings.use_name = True  # could eventually be disabled by an option
-    # settings.use_dirs = (settings.root_dir != "") # could eventually be disabled by an option
+    # check for delimeters in the tags
+    if not all([ valid_tag(tag) for tag in add_tags ]) or \
+       not all([ valid_tag(tag) for tag in remove_tags ]):
+        print("tags cannot contain delimeters")
+        return
 
     # run the tagger
     run(add_tags, remove_tags, files)

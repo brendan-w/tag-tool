@@ -20,7 +20,7 @@ class settings:
     root_dir         = ""
     use_name         = True
     use_dirs         = False
-    tag_delims       = "[ ,_&=%%\\/\\.\\-\\+\\(\\)\\[\\]\\{\\}]"
+    tag_delims       = "[ ,_&=%%\\/\\.\\-\\+\\(\\)\\[\\]\\{\\}\\\\]"
     default_delim    = "_"
     no_tags_filename = "unknown"
     find_cmd         = "find . -type f %s ! -path */.* ! -perm -o=x";
@@ -104,3 +104,7 @@ def get_all_tags(path_parts):
         tags.update(get_tags(path_parts.dirs))
 
     return tags
+
+
+def valid_tag(tag):
+    return re.search(settings.tag_delims, tag) == None

@@ -134,6 +134,11 @@ def main():
         print("please give tag selectors")
         return
 
+    # check for delimeters in the tags
+    if not all([ valid_tag(op.tag) for op in operations ]):
+        print("tags cannot contain delimeters")
+        return
+
     # the get_tags() function lower()s things for case insensitivity
     if not settings.case_sensitive:
         operations = [Operation(tag.lower(), op) for tag, op in operations]
