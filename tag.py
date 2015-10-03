@@ -3,18 +3,7 @@
 import os
 import re
 import sys
-from collections import namedtuple
-
-PathParts = namedtuple('PathParts', 'dirs name ext')
-
-# options
-verbose = True
-root_dir = ""
-use_name = True
-use_dirs = False
-tag_delims = "[ \\/.,_&=%%\\-\\+\\(\\)\\[\\]\\{\\}]"
-default_delim = "_"
-no_tags_filename = "unknown"
+from utils import *
 
 
 help_text = """
@@ -34,74 +23,9 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 
 # testing harness for changing settings
 def test_options(root, name, dirs):
-    global root_dir
-    global use_name
-    global use_dirs
-    root_dir = root
-    use_name = name
-    use_dirs = dirs
-
-
-# recursively finds the nearest .tagdir file denoting the limit for moving files
-def find_above(path, filename):
-    if os.path.isfile(os.path.join(path, filename)):
-        return path
-    else:
-        if path == "/":
-            return ""
-        else:
-            return find_above(os.path.dirname(path), filename)
-
-
-# lists only directories at the given path
-def dirs_at(path):
-    return [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
-
-
-# splits an absolute file into an instance of PathParts
-def f_split(f):
-    # split out the dirs, the filename, and the extension
-    dirs, f   = os.path.split(f)
-    name, ext = os.path.splitext(f)
-
-    # if dirs are being used, do NOT consider the path
-    # to the root tag directory
-    if use_dirs:
-        dirs = os.path.relpath(dirs, root_dir)
-
-    return PathParts(dirs, name, ext)
-
-
-# reassemble a PathParts struct back into a filename
-def f_join(path_parts):
-    path = path_parts.dirs
-    filename = path_parts.name + path_parts.ext
-
-    # if a root dir was used, resolve the reference
-    if use_dirs:
-        path = os.path.join(root_dir, path)
-
-    return os.path.join(path, filename)
-
-
-# returns the tagset for an arbitrary string
-def get_tags(s):
-    tags = set(re.split(tag_delims, s))
-    return set(filter(bool, tags)) # strain out empty strings
-
-
-# returns a set of tags on this file
-def get_all_tags(path_parts):
-
-    tags = set()
-
-    if use_name:
-        tags.union(get_tags(path_parts.name))
-
-    if use_dirs:
-        tags.union(get_tags(path_parts.dirs))
-
-    return tags
+    settings.root_dir = root
+    settings.use_name = name
+    settings.use_dirs = dirs
 
 
 # adds a tag to this file's name
@@ -109,7 +33,7 @@ def get_all_tags(path_parts):
 # the filename in the place() function
 def add(tag, path_parts):
     return PathParts(path_parts.dirs,
-                     tag + default_delim + path_parts.name,
+                     tag + settings.default_delim + path_parts.name,
                      path_parts.ext)
 
 
@@ -123,20 +47,20 @@ def remove(tag, path_parts):
     # WARNING: the order here is important. Deleting tags from the front or the
     # back will cause inner tags to become front or back tags. This causes
     # problems if there are two of the same tag adjacent to one-another.
-    mid_pattern   = ("(?<=%s)" % tag_delims) + tag + tag_delims
-    front_pattern = "^" + tag + tag_delims
-    back_pattern  = tag_delims + tag + "$"
+    mid_pattern   = ("(?<=%s)" % settings.tag_delims) + tag + settings.tag_delims
+    front_pattern = "^" + tag + settings.tag_delims
+    back_pattern  = settings.tag_delims + tag + "$"
     only_pattern  = "^" + tag + "$"
 
     # erase any tag instances from the name
-    if use_name:
+    if settings.use_name:
         name = re.sub(mid_pattern, "", name)
         name = re.sub(front_pattern, "", name)
         name = re.sub(back_pattern, "", name)
-        name = re.sub(only_pattern, no_tags_filename, name)
+        name = re.sub(only_pattern, settings.no_tags_filename, name)
 
     # remove tags from the dirs
-    if use_dirs:
+    if settings.use_dirs:
         dirs = re.sub(mid_pattern, "", dirs)
         dirs = re.sub(front_pattern, "", dirs)
         dirs = re.sub(back_pattern, "", dirs)
@@ -153,7 +77,7 @@ def find_best_path(path, tags):
     best_tags_left = set(tags) # goal is to minimize len() for this
 
     # search all of the directories at the current path
-    for d in dirs_at(os.path.join(root_dir, path)):
+    for d in dirs_at(os.path.join(settings.root_dir, path)):
 
         d_tags = get_tags(d)
 
@@ -177,7 +101,7 @@ def find_best_path(path, tags):
     return (best_path, best_tags_left)
 
 
-# Only used if use_dirs == True
+# Only used if settings.use_dirs == True
 # Sinks a file back down the directory tree, according to its tags
 # Directories are favored as tag storage. Also handles deletion of tags
 # from dir names carrying multiple tags
@@ -185,7 +109,7 @@ def resolve_dirs(path_parts):
     tags = get_all_tags(path_parts)
 
     # recurse to find the best directory path for this tagset
-    path, remaining_tags = find_best_path(root_dir, tags)
+    path, remaining_tags = find_best_path(settings.root_dir, tags)
 
     # find out which tags were handled by directories
     # and remove them from the filename
@@ -213,7 +137,7 @@ def run_for_file(add_tags, remove_tags, f):
 
     # reposition the file in the tree, favoring tags
     # in the form of directory names
-    if use_dirs:
+    if settings.use_dirs:
         path_parts = resolve_dirs(path_parts)
 
     return f_join(path_parts)
@@ -226,9 +150,7 @@ def run(add_tags, remove_tags, files):
 
 
 def main():
-    global verbose
-    global root_dir
-    global use_dirs
+    load_settings()
 
     add_tags    = set()
     remove_tags = set()
@@ -239,7 +161,7 @@ def main():
             print(help_text)
             return
         elif option == "--verbose":
-            verbose = True
+            settings.verbose = True
         else:
             if option[0] == "+":
                 add_tags.add(option[1:]);
@@ -258,13 +180,12 @@ def main():
         print("please specify a tag operation")
         return
 
-    root_dir = find_above(os.getcwd(), ".tagdir")
-    use_name = True  # could eventually be disabled by an option
-    use_dirs = (root_dir != "") # could eventually be disabled by an option
+    # settings.root_dir = find_above(os.getcwd(), ".tagdir")
+    # settings.use_name = True  # could eventually be disabled by an option
+    # settings.use_dirs = (settings.root_dir != "") # could eventually be disabled by an option
 
     # run the tagger
     run(add_tags, remove_tags, files)
-
 
 if(__name__ == "__main__"):
     main()
