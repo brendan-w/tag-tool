@@ -20,7 +20,7 @@ class settings:
     root_dir         = ""
     use_name         = True
     use_dirs         = False
-    tag_delims       = "[ \\/.,_&=%%\\-\\+\\(\\)\\[\\]\\{\\}]"
+    tag_delims       = "[ ,_&=%%\\/\\.\\-\\+\\(\\)\\[\\]\\{\\}]"
     default_delim    = "_"
     no_tags_filename = "unknown"
     find_cmd         = "find . -type f %s ! -path */.* ! -perm -o=x";
@@ -86,7 +86,7 @@ def f_join(path_parts):
 def get_tags(s):
     tags = set(re.split(settings.tag_delims, s))
 
-    if settings.case_sensitive:
+    if not settings.case_sensitive:
         tags = set([x.lower() for x in tags])
 
     return set(filter(bool, tags)) # strain out empty strings
@@ -98,9 +98,9 @@ def get_all_tags(path_parts):
     tags = set()
 
     if settings.use_name:
-        tags.union(get_tags(path_parts.name))
+        tags = tags.union(get_tags(path_parts.name))
 
     if settings.use_dirs:
-        tags.union(get_tags(path_parts.dirs))
+        tags = tags.union(get_tags(path_parts.dirs))
 
     return tags
