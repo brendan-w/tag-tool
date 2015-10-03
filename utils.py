@@ -23,13 +23,15 @@ class settings:
     tag_delims       = "[ ,_&=%%\\/\\.\\-\\+\\(\\)\\[\\]\\{\\}\\\\]"
     default_delim    = "_"
     no_tags_filename = "unknown"
-    find_cmd         = "find . -type f %s ! -path */.* ! -perm -o=x";
+    find_cmd         = "find %s -type f %s ! -path */.* ! -perm -o=x";
     case_sensitive   = True
 
 
 def load_settings():
     settings.root_dir = find_above(os.getcwd(), tagdir_filename)
     settings.use_dirs = (settings.root_dir != "") # could eventually be disabled by an option
+    if settings.root_dir == "":
+        settings.root_dir = "."
 
 
 # recursively finds the nearest .tagdir file denoting the limit for moving files
