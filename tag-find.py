@@ -40,16 +40,21 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 def find_base_files(operations):
 
     # construct the find command based on the operations given
-    cmd_str = ""
+    flag_str = ""
 
     for op in operations:
         if op.type == INCLUSION:
-            cmd_str += " -path *%s*" % op.tag
+            if not flag_str:
+                flag_str += " -path *%s*" % op.tag
+            else:
+                flag_str = "( " + flag_str + " ) -or -path *%s*" % op.tag
         elif op.type == EXCLUSION:
-            cmd_str += " ! -path *%s*" % op.tag
+            flag_str += " ! -path *%s*" % op.tag
+        elif op.type == INTERSECTION:
+            flag_str += " -path *%s*" % op.tag
 
     # insert the selection flags into the find command
-    cmd = find_cmd % cmd_str
+    cmd = find_cmd % flag_str
 
     # run the find
     try:
@@ -68,12 +73,6 @@ def run(operations):
 def main():
 
     operations = []
-
-    # the 3 types of selection operations
-
-    tag_intersections = set()
-    tag_additions     = set()
-    tag_exclusions    = set()
 
     for option in sys.argv[1:]:
         if option == "--help":
