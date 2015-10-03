@@ -162,6 +162,8 @@ def main():
             return
         elif option == "--verbose":
             settings.verbose = True
+        elif option == "--casei":
+            settings.case_sensitive = False
         else:
             if option[0] == "+":
                 add_tags.add(option[1:]);
@@ -185,6 +187,10 @@ def main():
        not all([ valid_tag(tag) for tag in remove_tags ]):
         print("tags cannot contain delimeters")
         return
+
+    # the get_tags() function lower()s things for case insensitivity
+    if not settings.case_sensitive:
+        remove_tags = set([tag.lower() for tag in remove_tags])
 
     # run the tagger
     run(add_tags, remove_tags, files)
