@@ -98,9 +98,9 @@ def get_all_tags(path_parts):
     tags = set()
 
     if settings.use_name:
-        tags = tags.union(get_tags(path_parts.name))
+        tags.update(get_tags(path_parts.name))
 
     if settings.use_dirs:
-        tags = tags.union(get_tags(path_parts.dirs))
+        tags.update(get_tags(path_parts.dirs))
 
     return tags
