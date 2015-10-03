@@ -24,6 +24,7 @@ class settings:
     default_delim    = "_"
     no_tags_filename = "unknown"
     find_cmd         = "find . -type f %s ! -path */.* ! -perm -o=x";
+    case_sensitive   = True
 
 
 def load_settings():
@@ -84,6 +85,10 @@ def f_join(path_parts):
 # returns the tagset for an arbitrary string
 def get_tags(s):
     tags = set(re.split(settings.tag_delims, s))
+
+    if settings.case_sensitive:
+        tags = set([x.lower() for x in tags])
+
     return set(filter(bool, tags)) # strain out empty strings
 
 
