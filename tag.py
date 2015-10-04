@@ -32,6 +32,11 @@ def test_options(root, name, dirs):
 # if there is a dir to encode this tag, it will be removed from
 # the filename in the place() function
 def add(tag, path_parts):
+
+    # if the tag is already there, do nothing
+    if parts_have_tag(path_parts, tag):
+        return path_parts
+
     if path_parts.name != "":
         tag += settings.default_delim
 
@@ -133,8 +138,7 @@ def run_for_file(add_tags, remove_tags, f):
 
     # add the requested tags, if they're not already there
     for tag in add_tags:
-        if tag and tag not in current_tags:
-            path_parts = add(tag, path_parts)
+        path_parts = add(tag, path_parts)
 
     # reposition the file in the tree, favoring tags
     # in the form of directory names

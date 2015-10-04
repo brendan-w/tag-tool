@@ -84,6 +84,28 @@ def f_join(path_parts):
     return os.path.join(path, filename)
 
 
+def has_tag(s, tag):
+
+    flags = 0 if settings.case_sensitive else re.IGNORECASE
+
+    #           (^|[ .,_-])tag($|[ .,_-])
+    pattern  = "(^|" + settings.tag_delims + ")" + tag + "($|" + settings.tag_delims + ")"
+    return re.search(pattern, s, flags) != None
+
+
+def parts_have_tag(path_parts, tag):
+
+    if settings.use_name:
+        if has_tag(path_parts.name, tag):
+            return True
+
+    if settings.use_dirs:
+        if has_tag(path_parts.dirs, tag):
+            return True
+
+    return False
+
+
 # returns the tagset for an arbitrary string
 def get_tags(s):
     tags = set(re.split(settings.tag_delims, s))
