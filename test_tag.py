@@ -19,9 +19,7 @@ test_tree/
 │   └── c/
 │       └── .gitkeep
 ├── d/
-│   ├── a/
-│   │   └── .gitkeep
-│   └── e/
+│   └── a/
 │       └── .gitkeep
 ├── f_g/
 │   └── a_b_c
