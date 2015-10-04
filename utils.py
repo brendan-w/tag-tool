@@ -30,7 +30,7 @@ def load_settings():
     settings.root_dir = find_above(os.getcwd(), tagdir_filename)
     settings.use_dirs = (settings.root_dir != "") # could eventually be disabled by an option
     if settings.root_dir == "":
-        settings.root_dir = "."
+        settings.root_dir = os.getcwd()
 
 
 # recursively finds the nearest .tagdir file denoting the limit for moving files
@@ -69,7 +69,10 @@ class File:
         if settings.use_dirs:
             path = os.path.join(settings.root_dir, path)
 
-        return os.path.join(path, filename)
+        path = os.path.join(path, filename)
+
+        # normalize the path (for when self.dirs == "./")
+        return os.path.normpath(path)
 
 
     def get_tags(self):

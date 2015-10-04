@@ -80,9 +80,9 @@ def find_base_files(operations):
 
 # function to refine the selection based on the users instructions
 # returns boolean for whether the file was selected
-def match(f, operations):
-    path_parts = f_split(f)
-    tags = get_all_tags(path_parts)
+def match(filestr, operations):
+
+    tags = File(filestr).get_tags()
 
     matched = True
 
