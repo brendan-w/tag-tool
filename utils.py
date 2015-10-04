@@ -246,4 +246,6 @@ def get_tags(s):
 
 
 def valid_tag(tag):
+    if tag == "":
+        return False
     return re.search(settings.tag_delims, tag) == None

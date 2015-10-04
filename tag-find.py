@@ -82,7 +82,7 @@ def find_base_files(operations):
 # returns boolean for whether the file was selected
 def match(filestr, operations):
 
-    tags = File(filestr).get_tags()
+    f = File(filestr)
 
     matched = True
 
@@ -91,11 +91,11 @@ def match(filestr, operations):
     for op in operations:
 
         if op.type == INTERSECTION:
-            if op.tag not in tags:
+            if not f.has_tag(op.tag):
                 matched = False
         else:
             # if the file has the tag for this operation
-            if op.tag in tags:
+            if f.has_tag(op.tag):
                 if op.type == INCLUSION:
                     matched = True
                 elif op.type == EXCLUSION:
@@ -137,12 +137,8 @@ def main():
 
     # check for delimeters in the tags
     if not all([ valid_tag(op.tag) for op in operations ]):
-        print("tags cannot contain delimeters")
+        print("tags cannot be empty strings, or contain delimeters")
         return
-
-    # the get_tags() function lower()s things for case insensitivity
-    if not settings.case_sensitive:
-        operations = [Operation(tag.lower(), op) for tag, op in operations]
 
     # run the selection
     files = select(operations)
