@@ -30,7 +30,7 @@ test_tree/
 
 
 def try_add_remove(f, add_tags, remove_tags):
-    f = File(os.path.join(cwd, "a/a_b_c"))
+    f = File(os.path.join(cwd, f))
     f.add_remove_tags(add_tags, remove_tags)
     return os.path.relpath(str(f), cwd)
 
@@ -94,3 +94,31 @@ def test_dir_computer():
     # combinations of the above
     assert( try_find_best_path(["a", "b", "c"]) == ("a/b", set(["c"])) )
     assert( try_find_best_path(["b", "d"])      == ("d",   set(["b"])) )
+
+
+def test_tag_add_dirs():
+    # USE directories
+    settings.use_dirs = True
+
+    # don't add tags that are already present, and recompute dirs
+    assert( try_add_remove("a/a_b_c", ["a"], []) == "a/b/c" )
+
+    # recompute paths
+    assert( try_add_remove("a/a_b_c", ["d"], [])      == "a/b/d_c" )
+    assert( try_add_remove("a/a_b_c", ["d", "e"], []) == "a/b/e_d_c" )
+
+
+def test_tag_remove_dirs():
+    # USE directories
+    settings.use_dirs = True
+
+    # general tag removal
+    assert( try_add_remove("a/a_b_c",   [], ["a"])      == "b_c" )
+    assert( try_add_remove("f_g/a_b_c", [], ["a"])      == "f_g/b_c" )
+    assert( try_add_remove("f_g/a_b_c", [], ["f", "g"]) == "a/b/c" )
+
+    # tag removal from multi-tag directories
+    assert( try_add_remove("f_g/a_b_c", [], ["f"]) == "a/b/g_c" )
+    assert( try_add_remove("f_g/a_b_c", [], ["g"]) == "a/b/f_c" )
+    assert( try_add_remove("f_g/a_b_c", [], ["f", "a"]) == "g_b_c" )
+    assert( try_add_remove("f_g/a_b_c", [], ["f", "b"]) == "a/c/g" )

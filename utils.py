@@ -16,7 +16,6 @@ tagdir_filename = ".tagdir"
 class Settings:
 
     root_dir         = ""
-    use_name         = True
     use_dirs         = False
     tag_delims       = "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]"
     default_delim    = "_"
@@ -40,7 +39,6 @@ Main File Class
 
 class File:
     def __init__(self, filestr):
-
         # save a copy of the original path
         self.filestr = filestr
 
@@ -73,8 +71,7 @@ class File:
 
         tags = set()
 
-        if settings.use_name:
-            tags.update(get_tags(self.name))
+        tags.update(get_tags(self.name))
 
         if settings.use_dirs:
             tags.update(get_tags(self.dirs))
@@ -83,9 +80,8 @@ class File:
 
 
     def has_tag(self, tag):
-        if settings.use_name:
-            if has_tag(self.name, tag):
-                return True
+        if has_tag(self.name, tag):
+            return True
 
         if settings.use_dirs:
             if has_tag(self.dirs, tag):
@@ -143,9 +139,8 @@ class File:
         edge_pattern  = "(^|" + settings.tag_delims + ")" + tag + "($|" + settings.tag_delims + ")"
 
         # erase any tag instances from the name
-        if settings.use_name:
-            self.name = re.sub(mid_pattern, "", self.name)
-            self.name = re.sub(edge_pattern, "", self.name)
+        self.name = re.sub(mid_pattern, "", self.name)
+        self.name = re.sub(edge_pattern, "", self.name)
 
         # remove tags from the dirs
         if settings.use_dirs:
