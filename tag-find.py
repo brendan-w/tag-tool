@@ -3,6 +3,7 @@
 import re
 import sys
 import subprocess
+from file import File
 from utils import *
 from collections import namedtuple
 
