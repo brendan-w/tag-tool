@@ -6,15 +6,13 @@ CLI for organizing files in a tag-based fashion
 A simple case:
 
 ```shell
-$ tree
-.
-└── a_b_c.txt
+$ ls
+a_b_c.txt
 
-$ tag -b a_b_c.txt
+$ tag -b +z a_b_c.txt
 
-$ tree
-.
-└── a_c.txt
+$ ls
+z_a_c.txt
 ```
 
 A more complex case:
