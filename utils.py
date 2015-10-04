@@ -40,6 +40,10 @@ Main File Class
 
 class File:
     def __init__(self, filestr):
+
+        # save a copy of the original path
+        self.filestr = filestr
+
         # split out the dirs, the filename, and the extension
         self.dirs, filestr  = os.path.split(filestr)
         self.name, self.ext = os.path.splitext(filestr)
