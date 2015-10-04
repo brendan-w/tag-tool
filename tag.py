@@ -22,13 +22,6 @@ Options:
 For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 """
 
-# testing harness for changing settings
-def test_options(root, name, dirs):
-    settings.root_dir = root
-    settings.use_name = name
-    settings.use_dirs = dirs
-
-
 
 def run(add_tags, remove_tags, files):
     for filestr in files:
@@ -39,8 +32,6 @@ def run(add_tags, remove_tags, files):
 
 
 def main():
-    load_settings()
-
     add_tags    = set()
     remove_tags = set()
     files       = set()

@@ -112,8 +112,6 @@ def select(operations):
 
 
 def main():
-    load_settings()
-
     operations = []
 
     for option in sys.argv[1:]:

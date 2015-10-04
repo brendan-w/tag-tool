@@ -1,22 +1,21 @@
 
 import re
 import os
-
+import configparser
 
 
 """
 Settings
 """
 
-
 # the name of the settings file that specifies the scope of directory tagging
 tagdir_filename = ".tagdir"
 
 # the main settings object with default settings
 # (defaults are used for when no .tagdir file is found)
-class settings:
-    verbose          = False
-    root_dir         = "."
+class Settings:
+
+    root_dir         = ""
     use_name         = True
     use_dirs         = False
     tag_delims       = "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]"
@@ -24,28 +23,18 @@ class settings:
     no_tags_filename = "unknown"
     find_cmd         = "find %s -type f %s ! -path */.* ! -perm -o=x";
     case_sensitive   = True
+    verbose          = False
 
+    def __init__(self):
+        self.root_dir = find_above(os.getcwd(), tagdir_filename)
+        self.use_dirs = (self.root_dir != "") # could eventually be disabled by an option
+        if self.root_dir == "":
+            self.root_dir = os.getcwd()
 
-def load_settings():
-    settings.root_dir = find_above(os.getcwd(), tagdir_filename)
-    settings.use_dirs = (settings.root_dir != "") # could eventually be disabled by an option
-    if settings.root_dir == "":
-        settings.root_dir = os.getcwd()
-
-
-# recursively finds the nearest .tagdir file denoting the limit for moving files
-def find_above(path, filename):
-    if os.path.isfile(os.path.join(path, filename)):
-        return path
-    else:
-        if path == "/":
-            return ""
-        else:
-            return find_above(os.path.dirname(path), filename)
 
 
 """
-General Utils
+Main File Class
 """
 
 
@@ -186,7 +175,9 @@ class File:
             self.__add(tag)
 
 
-
+"""
+General Utils
+"""
 
 
 # recursive function that determines the filepath that encodes the most
@@ -221,6 +212,17 @@ def find_best_path(path, tags):
     return (best_path, best_tags_left)
 
 
+# recursively finds the nearest .tagdir file denoting the limit for moving files
+def find_above(path, filename):
+    if os.path.isfile(os.path.join(path, filename)):
+        return path
+    else:
+        if path == "/":
+            return ""
+        else:
+            return find_above(os.path.dirname(path), filename)
+
+
 # lists only directories at the given path
 def dirs_at(path):
     return [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
@@ -249,3 +251,9 @@ def valid_tag(tag):
     if tag == "":
         return False
     return re.search(settings.tag_delims, tag) == None
+
+
+
+
+# import this object for settings
+settings = Settings()
