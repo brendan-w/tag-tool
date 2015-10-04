@@ -168,7 +168,6 @@ class File:
     def __resolve_dirs(self):
         tags = self.get_tags()
 
-
         # recurse to find the best directory path for this tagset
         path, remaining_tags = find_best_path(settings.root_dir, tags)
 
@@ -177,8 +176,14 @@ class File:
         for tag in tags.difference(remaining_tags):
             self.__remove(tag)
 
-        if settings.use_dirs:
-            self.dirs = os.path.relpath(path, settings.root_dir)
+        # do this AFTER, since self.__remove() will removed tags from the dirs
+        self.dirs = os.path.relpath(path, settings.root_dir)
+
+        # ensure that any remaining tags are encoded in the filename
+        # this handles cases where directories contain multiple tags
+        # self.__add() will skip tags that are already present
+        for tag in remaining_tags:
+            self.__add(tag)
 
 
 
