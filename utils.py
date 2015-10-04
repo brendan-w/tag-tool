@@ -16,10 +16,10 @@ tagdir_filename = ".tagdir"
 # (defaults are used for when no .tagdir file is found)
 class settings:
     verbose          = False
-    root_dir         = ""
+    root_dir         = "."
     use_name         = True
     use_dirs         = False
-    tag_delims       = "[ ,_&=%%\\/\\.\\-\\+\\(\\)\\[\\]\\{\\}\\\\]"
+    tag_delims       = "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]"
     default_delim    = "_"
     no_tags_filename = "unknown"
     find_cmd         = "find %s -type f %s ! -path */.* ! -perm -o=x";
