@@ -20,17 +20,19 @@ $ tree
 A more complex case:
 
 ```shell
-$ tree
+$ tree -a
 .
+├── .tagdir
 ├── a/
 └── d_e/
-    └── a_b_c.txt
+    └── file.txt
 
-$ tag -d +z d_e/a_b_c.txt
+$ tag -d +z d_e/file.txt
 
-$ tree
+$ tree -a
 .
+├── .tagdir
 ├── a/
-│   └── e_z_b_c.txt
+│   └── e_z_file.txt
 └── d_e/
 ```
