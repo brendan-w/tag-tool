@@ -45,29 +45,27 @@ def remove(tag, path_parts):
     dirs = path_parts.dirs
 
     # remove tags from the name
-    # run as different regexes for simplicity
+    # Hard to combine these into one regex because python complains about not
+    # having fixed a length look-behind. Look-behind is necessary to prevent
+    # the leading delimeter from being eaten.
 
     # WARNING: the order here is important. Deleting tags from the front or the
     # back will cause inner tags to become front or back tags. This causes
     # problems if there are two of the same tag adjacent to one-another.
     mid_pattern   = ("(?<=%s)" % settings.tag_delims) + tag + settings.tag_delims
-    front_pattern = "^" + tag + settings.tag_delims
-    back_pattern  = settings.tag_delims + tag + "$"
-    only_pattern  = "^" + tag + "$"
+    
+    #                (^|[ .,_-])tag($|[ .,_-])
+    edge_pattern  = "(^|" + settings.tag_delims + ")" + tag + "($|" + settings.tag_delims + ")"
 
     # erase any tag instances from the name
     if settings.use_name:
         name = re.sub(mid_pattern, "", name)
-        name = re.sub(front_pattern, "", name)
-        name = re.sub(back_pattern, "", name)
-        name = re.sub(only_pattern, "", name)
+        name = re.sub(edge_pattern, "", name)
 
     # remove tags from the dirs
     if settings.use_dirs:
         dirs = re.sub(mid_pattern, "", dirs)
-        dirs = re.sub(front_pattern, "", dirs)
-        dirs = re.sub(back_pattern, "", dirs)
-        dirs = re.sub(only_pattern, "", dirs)
+        dirs = re.sub(edge_pattern, "", dirs)
 
     return PathParts(dirs, name, path_parts.ext)
 
@@ -144,7 +142,7 @@ def run_for_file(add_tags, remove_tags, f):
         path_parts = resolve_dirs(path_parts)
 
     if path_parts.name == "":
-        path_parts.name = settings.no_tags_filename
+        path_parts = PathParts(path_parts.dirs, settings.no_tags_filename, path_parts.ext)
 
     return f_join(path_parts)
 
