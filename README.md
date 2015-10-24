@@ -7,12 +7,12 @@ A simple case:
 
 ```shell
 $ ls
-a_b_c.txt
+a_file
 
-$ tag -b +z a_b_c.txt
+$ tag +z -a a_file
 
 $ ls
-z_a_c.txt
+z_file
 ```
 
 A more complex case:
@@ -22,15 +22,15 @@ $ tree -a
 .
 ├── .tagdir
 ├── a/
-└── d_e/
-    └── file.txt
+└── some_dir/
+    └── a_file
 
-$ tag -d +z d_e/file.txt
+$ tag -dir some_dir/a_file
 
 $ tree -a
 .
 ├── .tagdir
 ├── a/
-│   └── e_z_file.txt
-└── d_e/
+│   └── some_file
+└── some_dir/
 ```
