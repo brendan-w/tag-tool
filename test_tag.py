@@ -22,7 +22,7 @@ test_tree/
 │   └── a/
 │       └── .gitkeep
 ├── f_g/
-│   └── a_b_c
+│   └── a_b
 └── .tagdir
 """
 
@@ -111,12 +111,15 @@ def test_tag_remove_dirs():
     settings.use_dirs = True
 
     # general tag removal
-    assert( try_add_remove("a/a_b_c",   [], ["a"])      == "b_c" )
-    assert( try_add_remove("f_g/a_b_c", [], ["a"])      == "f_g/b_c" )
-    assert( try_add_remove("f_g/a_b_c", [], ["f", "g"]) == "a/b/c" )
+    assert( try_add_remove("a/a_b_c", [], ["a"])      == "b_c" )
+    assert( try_add_remove("f_g/a_b", [], ["a"])      == "f_g/b" )
+    assert( try_add_remove("f_g/a_b", [], ["f", "g"]) == "a/b/" + settings.no_tags_filename )
+
+    # tag removal causing tags in name to be used in dirs
+    assert( try_add_remove("a/a_b_c",   [], ["c"])    == "a/b/" + settings.no_tags_filename )
 
     # tag removal from multi-tag directories
-    assert( try_add_remove("f_g/a_b_c", [], ["f"]) == "a/b/g_c" )
-    assert( try_add_remove("f_g/a_b_c", [], ["g"]) == "a/b/f_c" )
-    assert( try_add_remove("f_g/a_b_c", [], ["f", "a"]) == "g_b_c" )
-    assert( try_add_remove("f_g/a_b_c", [], ["f", "b"]) == "a/c/g" )
+    assert( try_add_remove("f_g/a_b", [], ["f"])      == "a/b/g" )
+    assert( try_add_remove("f_g/a_b", [], ["g"])      == "a/b/f" )
+    assert( try_add_remove("f_g/a_b", [], ["f", "a"]) == "g_b" )
+    assert( try_add_remove("f_g/a_b", [], ["f", "b"]) == "a/g" )
