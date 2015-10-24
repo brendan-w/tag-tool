@@ -16,7 +16,7 @@ Commands:
 \t-[TAG]   removes a tag from the given files
 
 Options:
-\t--casei     performs case insensitive tag removal
+\t--nocase     performs case insensitive tag removal
 \t--verbose   prints the new filepath for each renamed file
 \t--help      prints this help text and exits
 
@@ -43,7 +43,7 @@ def main():
             return
         elif option == "--verbose":
             settings.verbose = True
-        elif option == "--casei":
+        elif option == "--nocase":
             settings.case_sensitive = False
         else:
             if option[0] == "+":

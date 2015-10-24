@@ -26,7 +26,7 @@ Selectors:
 \t-[TAG]   removes tagged files from the selection   ("NOT")
 
 Options:
-\t--casei   performs a case insensitive search
+\t--nocase   performs a case insensitive search
 \t--help    prints this help text and exits
 
 For issues and documentation: https://github.com/brendanwhitfield/tag-tool
@@ -119,7 +119,7 @@ def main():
         if option == "--help":
             print(help_text)
             return
-        elif option == "--casei":
+        elif option == "--nocase":
             settings.case_sensitive = False
         else:
             if option[0] == "+":
