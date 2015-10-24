@@ -51,7 +51,7 @@ def main():
             elif option[0] == "-":
                 remove_tags.add(option[1:]);
             elif os.path.isfile(option):
-                files.add(os.path.abspath(option))
+                files.add(option)
             else:
                 print("'%s' is not a valid file or command line option" % option)
 

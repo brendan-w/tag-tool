@@ -73,7 +73,7 @@ def find_base_files(operations):
     # run the find
     try:
         b = subprocess.check_output(cmd.split(), universal_newlines=True)
-        return b.split()
+        return b.splitlines()
     except subprocess.CalledProcessError:
         print("Failed to execute 'find'")
         return []

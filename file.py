@@ -1,4 +1,5 @@
 
+import os
 from utils import *
 
 """
@@ -8,6 +9,9 @@ Main File Class
 
 class File:
     def __init__(self, filestr):
+        # ensure that paths are always absolute
+        filestr = os.path.abspath(filestr)
+
         # save a copy of the original path
         self.filestr = filestr
 
