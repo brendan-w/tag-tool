@@ -76,6 +76,9 @@ def test_tag_remove_name():
     # remove multiple tags
     assert( try_add_remove("a/a_b_c", [], ["b", "c"]) == "a/a" )
 
+    # remove all tags
+    assert( try_add_remove("a/a_b_c", [], ["a", "b", "c"]) == "a/" + settings.no_tags_filename )
+
 
 
 def test_dir_computer():
@@ -90,8 +93,14 @@ def test_dir_computer():
     assert( try_find_best_path(["b", "c"]) == (".",   set(["b", "c"])) )
 
     # combinations of the above
-    assert( try_find_best_path(["a", "b", "c"]) == ("a/b", set(["c"])) )
-    assert( try_find_best_path(["b", "d"])      == ("d",   set(["b"])) )
+    assert( try_find_best_path(["b", "d"]) == ("d",   set(["b"])) )
+
+    # the ambiguous case
+    # currently an arbitrary decision, and may vary from platform to platform
+    r = try_find_best_path(["a", "b", "c"])
+    assert( r == ("a/b", set(["c"])) \
+            or \
+            r == ("a/c", set(["b"])) )
 
 
 def test_tag_add_dirs():
