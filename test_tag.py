@@ -108,7 +108,11 @@ def test_tag_add_dirs():
     settings.use_dirs = True
 
     # don't add tags that are already present, and recompute dirs
-    assert( try_add_remove("a/a_b_c", ["a"], []) == "a/b/c" )
+    # also an ambiguous case (see note in test_dir_computer)
+    r = try_add_remove("a/a_b_c", ["a"], [])
+    assert( r == "a/b/c" \
+            or \
+            r == "a/c/b" )
 
     # recompute paths
     assert( try_add_remove("a/a_b_c", ["d"], [])      == "a/b/d_c" )
