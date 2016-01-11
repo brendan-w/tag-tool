@@ -43,7 +43,7 @@ def try_find_best_path(tags):
     return (os.path.relpath(r[0], cwd), r[1])
 
 
-def test_valid_tag():
+def test_core_valid_tag():
     assert(     valid_tag("a") )
     assert(     valid_tag("abcdefg") )
     assert( not valid_tag("") )
@@ -52,13 +52,23 @@ def test_valid_tag():
     assert( not valid_tag("a_b") )
 
 
-def test_get_tags():
+def test_core_get_tags():
     assert( get_tags("a")   == {"a"} )
     assert( get_tags("ab")  == {"ab"} )
     assert( get_tags("a_b") == {"a", "b"} )
     assert( get_tags("ab_cd") == {"ab", "cd"} )
     assert( get_tags("a_b_c_d") == {"a", "b", "c", "d"} )
     assert( get_tags("a_a_a_d") == {"a", "d"} )
+
+
+def test_core_has_tag():
+    assert(     has_tag("a", "a") )
+    assert(     has_tag("a_a", "a") )
+    assert(     has_tag("a_b", "a") )
+    assert(     has_tag("a_b", "b") )
+    assert(     has_tag("_a_b_", "a") )
+    assert(     has_tag("_a_b_", "b") )
+    assert( not has_tag("a_b", "c") )
 
 
 def test_tag_add_name():
