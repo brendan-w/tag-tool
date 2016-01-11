@@ -52,6 +52,15 @@ def test_valid_tag():
     assert( not valid_tag("a_b") )
 
 
+def test_get_tags():
+    assert( get_tags("a")   == {"a"} )
+    assert( get_tags("ab")  == {"ab"} )
+    assert( get_tags("a_b") == {"a", "b"} )
+    assert( get_tags("ab_cd") == {"ab", "cd"} )
+    assert( get_tags("a_b_c_d") == {"a", "b", "c", "d"} )
+    assert( get_tags("a_a_a_d") == {"a", "d"} )
+
+
 def test_tag_add_name():
     # DON'T use directories
     settings.use_dirs = False
@@ -96,23 +105,23 @@ def test_tag_remove_name():
 def test_dir_computer():
 
     # simple finding of directories
-    assert( try_find_best_path(["a"])      == ("a",   set([])) )
-    assert( try_find_best_path(["a", "b"]) == ("a/b", set([])) )
-    assert( try_find_best_path(["a", "d"]) == ("d/a", set([])) )
+    assert( try_find_best_path(["a"])      == ("a",   set()) )
+    assert( try_find_best_path(["a", "b"]) == ("a/b", set()) )
+    assert( try_find_best_path(["a", "d"]) == ("d/a", set()) )
 
     # non-existant directories
-    assert( try_find_best_path(["b"])      == (".",   set(["b"])) )
-    assert( try_find_best_path(["b", "c"]) == (".",   set(["b", "c"])) )
+    assert( try_find_best_path(["b"])      == (".",   {"b"}) )
+    assert( try_find_best_path(["b", "c"]) == (".",   {"b", "c"}) )
 
     # combinations of the above
-    assert( try_find_best_path(["b", "d"]) == ("d",   set(["b"])) )
+    assert( try_find_best_path(["b", "d"]) == ("d",   {"b"}) )
 
     # the ambiguous case
     # currently an arbitrary decision, and may vary from platform to platform
     r = try_find_best_path(["a", "b", "c"])
-    assert( r == ("a/b", set(["c"])) \
+    assert( r == ("a/b", {"c"}) \
             or \
-            r == ("a/c", set(["b"])) )
+            r == ("a/c", {"b"}) )
 
 
 def test_tag_add_dirs():
