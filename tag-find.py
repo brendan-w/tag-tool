@@ -3,16 +3,8 @@
 import re
 import sys
 import subprocess
-from file import File
-from utils import *
 from collections import namedtuple
-
-Operation = namedtuple('TagOp', 'tag type')
-
-# available operations
-INTERSECTION = 0
-INCLUSION    = 1
-EXCLUSION    = 2
+from core import *
 
 
 
@@ -31,6 +23,17 @@ Options:
 
 For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 """
+
+
+
+# Tag operation struct with slots for the tag (string) and the
+# operation type (see below)
+Operation = namedtuple('TagOp', 'tag type')
+
+# available operations
+INTERSECTION = 0
+INCLUSION    = 1
+EXCLUSION    = 2
 
 
 

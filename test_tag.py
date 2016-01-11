@@ -7,7 +7,7 @@ import os
 os.chdir("test_tree")
 cwd = os.getcwd()
 
-from tag import *
+from core import *
 
 
 """
@@ -27,6 +27,11 @@ test_tree/
 """
 
 
+
+"""
+Utils
+"""
+
 def try_add_remove(f, add_tags, remove_tags):
     f = File(os.path.join(cwd, f))
     f.add_remove_tags(add_tags, remove_tags)
@@ -38,10 +43,17 @@ def try_find_best_path(tags):
     return (os.path.relpath(r[0], cwd), r[1])
 
 
+def test_valid_tag():
+    assert(     valid_tag("a") )
+    assert(     valid_tag("abcdefg") )
+    assert( not valid_tag("") )
+    assert( not valid_tag("_a") )
+    assert( not valid_tag("a_") )
+    assert( not valid_tag("a_b") )
 
 
 def test_tag_add_name():
-    # DON'T use_dirs
+    # DON'T use directories
     settings.use_dirs = False
 
     # don't add tags that are already present
@@ -58,7 +70,7 @@ def test_tag_add_name():
 
 
 def test_tag_remove_name():
-    # DON'T use_dirs
+    # DON'T use directories
     settings.use_dirs = False
 
     # remove tags from front of name
@@ -114,9 +126,11 @@ def test_tag_add_dirs():
             or \
             r == "a/c/b" )
 
-    # recompute paths
-    assert( try_add_remove("a/a_b_c", ["d"], [])      == "a/b/d_c" )
-    assert( try_add_remove("a/a_b_c", ["d", "e"], []) == "a/b/e_d_c" )
+    # don't move to a new directory unless ALL tags match
+    r = try_add_remove("a/a_b_c", ["f"], [])
+    assert( r == "a/b/f_c" \
+            or \
+            r == "a/c/f_b")
 
 
 def test_tag_remove_dirs():

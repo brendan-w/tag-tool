@@ -3,8 +3,7 @@
 import os
 import re
 import sys
-from file import File
-from utils import *
+from core import *
 
 
 help_text = """
