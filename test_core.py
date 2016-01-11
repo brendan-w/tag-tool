@@ -43,6 +43,28 @@ def try_find_best_path(tags):
     return (os.path.relpath(r[0], cwd), r[1])
 
 
+def test_find_best_path():
+
+    # simple finding of directories
+    assert( try_find_best_path(["a"])      == ("a",   set()) )
+    assert( try_find_best_path(["a", "b"]) == ("a/b", set()) )
+    assert( try_find_best_path(["a", "d"]) == ("d/a", set()) )
+
+    # non-existant directories
+    assert( try_find_best_path(["b"])      == (".",   {"b"}) )
+    assert( try_find_best_path(["b", "c"]) == (".",   {"b", "c"}) )
+
+    # combinations of the above
+    assert( try_find_best_path(["b", "d"]) == ("d",   {"b"}) )
+
+    # the ambiguous case
+    # currently an arbitrary decision, and may vary from platform to platform
+    r = try_find_best_path(["a", "b", "c"])
+    assert( r == ("a/b", {"c"}) \
+            or \
+            r == ("a/c", {"b"}) )
+
+
 def test_core_valid_tag():
     assert(     valid_tag("a") )
     assert(     valid_tag("abcdefg") )
@@ -110,28 +132,6 @@ def test_tag_remove_name():
     # remove all tags
     assert( try_add_remove("a/a_b_c", [], ["a", "b", "c"]) == "a/" + settings.no_tags_filename )
 
-
-
-def test_dir_computer():
-
-    # simple finding of directories
-    assert( try_find_best_path(["a"])      == ("a",   set()) )
-    assert( try_find_best_path(["a", "b"]) == ("a/b", set()) )
-    assert( try_find_best_path(["a", "d"]) == ("d/a", set()) )
-
-    # non-existant directories
-    assert( try_find_best_path(["b"])      == (".",   {"b"}) )
-    assert( try_find_best_path(["b", "c"]) == (".",   {"b", "c"}) )
-
-    # combinations of the above
-    assert( try_find_best_path(["b", "d"]) == ("d",   {"b"}) )
-
-    # the ambiguous case
-    # currently an arbitrary decision, and may vary from platform to platform
-    r = try_find_best_path(["a", "b", "c"])
-    assert( r == ("a/b", {"c"}) \
-            or \
-            r == ("a/c", {"b"}) )
 
 
 def test_tag_add_dirs():
