@@ -2,6 +2,7 @@
 
 import os
 import sys
+from subprocess import call
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
@@ -51,6 +52,7 @@ Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider,
 class Window:
 
     def __init__(self, files, init_str=""):
+        self.files = files
         self.window = Gtk.Window(Gtk.WindowType.TOPLEVEL)
     
         self.window.connect("delete_event", lambda w,e: False)
@@ -62,20 +64,20 @@ class Window:
         self.window.set_resizable(True)
         self.window.set_modal(True)
 
-        entry = Gtk.Entry()
-        self.window.add(entry)
+        self.entry = Gtk.Entry()
+        self.window.add(self.entry)
 
-        entry.set_text(init_str)
-        entry.connect("key-release-event", self.on_key_release)
+        self.entry.set_text(init_str)
+        self.entry.connect("key-release-event", self.on_key_release)
 
-        entry.show()
+        self.entry.show()
         self.window.show()
 
         # put the cursor at the end of the text
         # needs to happen AFTER the window is shown
-        l = len(entry.get_text())
-        entry.grab_focus()
-        entry.select_region(l,l)
+        l = len(self.entry.get_text())
+        self.entry.grab_focus()
+        self.entry.select_region(l,l)
 
 
     def on_key_release(self, widget, data=None):
@@ -83,11 +85,14 @@ class Window:
             self.tag()
         elif data.keyval == Gdk.KEY_Escape:
             Gtk.main_quit()
+        # TODO: tab-complete
 
 
     def tag(self):
-        print("tagging!")
+        # run the tag command
+        command = ["tag"] + self.files + self.entry.get_text().split()
         Gtk.main_quit()
+        call(command)
 
 
 
