@@ -9,14 +9,17 @@ from gi.repository import Gtk, Gdk
 
 help_text = """
 Usage:
-\ttag [FILE...] [INITIAL COMMAND]
+\ttag-dialog [FILE...] [INITIAL COMMAND]
+
+Simple GUI dialog for the tagging files. Intended to be used in
+"Custom Actions" provided by most file management/preview applications.
 
 Commands:
 \t+[TAG]   adds a tag to the given files
 \t-[TAG]   removes a tag from the given files
 
 Options:
-\t--help      prints this help text and exits
+\t--help   prints this help text and exits
 
 For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 """
