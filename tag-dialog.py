@@ -63,6 +63,7 @@ class Window:
         self.window.set_default_size(400, -1)
         self.window.set_resizable(True)
         self.window.set_modal(True)
+        self.window.set_position(Gtk.WindowPosition.CENTER)
 
         self.entry = Gtk.Entry()
         self.window.add(self.entry)
