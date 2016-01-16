@@ -25,10 +25,10 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 
 def run(add_tags, remove_tags, files):
     for filestr in files:
-        print(filestr)
         f = File(filestr)
         f.add_remove_tags(add_tags, remove_tags)
-        print(str(f))
+        os.rename(filestr, str(f))
+        print("‘%s’ -> ‘%s’" % (filestr, str(f)))
 
 
 def main():
