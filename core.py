@@ -6,6 +6,17 @@ import configparser
 
 
 """
+Constants
+"""
+
+# the name of the settings file that specifies the scope of directory tagging
+TAGDIR_FILENAME = ".tagdir"
+
+# the config section containing settings
+TAGDIR_SECTION = "tagdir"
+
+
+"""
 General Utils
 """
 
@@ -46,7 +57,7 @@ def find_above(path, filename):
     if os.path.isfile(os.path.join(path, filename)):
         return path
     else:
-        if path == "/":
+        if not path or path == "/":
             return ""
         else:
             return find_above(os.path.dirname(path), filename)
@@ -93,8 +104,6 @@ Settings
 # (defaults are used for when no .tagdir file is found)
 class Settings:
 
-    # the name of the settings file that specifies the scope of directory tagging
-    TAGDIR_FILENAME = ".tagdir"
 
     # the root directory for tag operations with dirs
     # should only be used when settings.use_dirs == True
@@ -102,24 +111,24 @@ class Settings:
 
     # default settings
     settings = {
-        use_dirs         : False,
-        tag_delims       : "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]",
-        default_delim    : "_",
-        no_tags_filename : "unknown",
-        find_cmd         : "find %s -type f %s ! -path */.* ! -perm -o=x",
-        case_sensitive   : True,
-        verbose          : False
+        "use_dirs"         : False,
+        "tag_delims"       : "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]",
+        "default_delim"    : "_",
+        "no_tags_filename" : "unknown",
+        "find_cmd"         : "find %s -type f %s ! -path */.* ! -perm -o=x",
+        "case_sensitive"   : True,
+        "verbose"          : False
     }
 
 
     def __init__(self, path="", overrides={}):
 
         self.root_dir = find_above(path, TAGDIR_FILENAME)
-        self.use_dirs = (self.root_dir != "") # could eventually be disabled by an option
+        self.settings.use_dirs = (self.root_dir != "") # could eventually be disabled by an option
 
         # if we found a .tagdir file, read it
         if self.root_dir != "":
-            tagdir_file = os.path.join(self.root_dir, tagdir_filename)
+            tagdir_file = os.path.join(self.root_dir, TAGDIR_FILENAME)
             self._load_config(tagdir_file)
 
         # override with command line options
@@ -132,8 +141,13 @@ class Settings:
 
 
     def _load_config(self, config_file):
-        parser = configparser.SafeConfigParser()
-        parser.read(config_file)
+        config = configparser.SafeConfigParser()
+        config.read(config_file)
+
+        if TAGDIR_SECTION in config:
+            for key in self.settings:
+                if key in config[TAGDIR_SECTION]:
+                    print("found key: %s" % key)
 
 
     def write_config(self, file_name):
