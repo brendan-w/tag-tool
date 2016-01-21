@@ -130,6 +130,11 @@ class Filename:
     def _remove(self, tag):
         """ remove tags from the file """
 
+        flags = 0 if self.config["case_sensitive"] else re.IGNORECASE
+
+        if not self.config["case_sensitive"]:
+            tag = tag.lower()
+
         # Hard to combine these into one regex because python complains about not
         # having fixed a length look-behind. Look-behind is necessary to prevent
         # the leading delimeter from being eaten.
@@ -147,13 +152,13 @@ class Filename:
                         "($|" + self.config["tag_delims"] + ")"
 
         # erase any tag instances from the name
-        self.name = re.sub(mid_pattern, "", self.name)
-        self.name = re.sub(edge_pattern, "", self.name)
+        self.name = re.sub(mid_pattern, "", self.name, flags=flags)
+        self.name = re.sub(edge_pattern, "", self.name, flags=flags)
 
         # remove tags from the dirs
         if self.config["use_dirs"]:
-            self.dirs = re.sub(mid_pattern, "", self.dirs)
-            self.dirs = re.sub(edge_pattern, "", self.dirs)
+            self.dirs = re.sub(mid_pattern, "", self.dirs, flags=flags)
+            self.dirs = re.sub(edge_pattern, "", self.dirs, flags=flags)
 
 
 

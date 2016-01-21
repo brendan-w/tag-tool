@@ -3,6 +3,8 @@ import re
 import os
 import configparser
 
+from .utils import *
+
 
 
 """
@@ -36,8 +38,7 @@ class Config:
         "default_delim"    : "_",
         "no_tags_filename" : "unknown",
         "find_cmd"         : "find {dir} -type f {pattern} ! -path */.* ! -perm -o=x",
-        "case_sensitive"   : True,
-        "verbose"          : False
+        "case_sensitive"   : True
     }
 
 

@@ -7,6 +7,8 @@ import sys
 from tagtool import Filename
 
 
+verbose = False
+
 help_text = """
 Usage:
 \ttag [OPTION...] [COMMAND...] [FILE...]
@@ -31,11 +33,13 @@ def run(files, add_tags, remove_tags, config):
         f.add_remove_tags(add_tags, remove_tags) # run the tagger
         os.rename(filestr, str(f))
 
-        if config["verbose"]:
+        if verbose:
             print("‘%s’ -> ‘%s’" % (filestr, str(f)))
 
 
 def main():
+    global verbose
+
     add_tags    = set()
     remove_tags = set()
     files       = set()
@@ -48,7 +52,7 @@ def main():
             print(help_text)
             return
         elif option == "--verbose":
-            config["verbose"] = True
+            verbose = True
         elif option == "--nocase":
             config["case_sensitive"] = False
         else:
@@ -68,16 +72,6 @@ def main():
     if (len(add_tags) + len(remove_tags)) == 0:
         print("please specify a tag operation")
         return
-
-    # check for delimeters in the tags
-    # if not all([ valid_tag(tag) for tag in add_tags ]) or \
-    #    not all([ valid_tag(tag) for tag in remove_tags ]):
-    #     print("tags cannot contain delimeters")
-    #     return
-
-    # the get_tags() function lower()s things for case insensitivity
-    if not settings.case_sensitive:
-        remove_tags = set([tag.lower() for tag in remove_tags])
 
     # run the tagger
     run(files, add_tags, remove_tags, config)
