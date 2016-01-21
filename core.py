@@ -22,13 +22,13 @@ General Utils
 
 # recursive function that determines the filepath that encodes the most
 # of the given tagset.
-def find_best_path(path, tags):
+def find_best_path(root_dir, path, tags):
 
     best_path = path
     best_tags_left = set(tags) # goal is to minimize len() for this
 
     # search all of the directories at the current path
-    for d in dirs_at(os.path.join(settings.root_dir, path)):
+    for d in dirs_at(os.path.join(root_dir, path)):
 
         d_tags = get_tags(d)
 
@@ -40,7 +40,7 @@ def find_best_path(path, tags):
             next_tags = set(tags).difference(d_tags)
 
             # recurse
-            r = find_best_path(os.path.join(path, d), next_tags)
+            r = find_best_path(root_dir, os.path.join(path, d), next_tags)
 
             # check to see if a better score was achieved
             if(len(r[1]) < len(best_tags_left)):
@@ -69,29 +69,29 @@ def dirs_at(path):
 
 
 # searches for a tag in an arbitrary string
-def has_tag(s, tag):
+def has_tag(s, tag, config):
 
-    flags = 0 if settings.case_sensitive else re.IGNORECASE
+    flags = 0 if config["case_sensitive"] else re.IGNORECASE
 
     #           (^|[ .,_-])tag($|[ .,_-])
-    pattern  = "(^|" + settings.tag_delims + ")" + tag + "($|" + settings.tag_delims + ")"
+    pattern  = "(^|" + config["tag_delims"] + ")" + tag + "($|" + config["tag_delims"] + ")"
     return re.search(pattern, s, flags) != None
 
 
 # returns the tagset for an arbitrary string
-def get_tags(s):
-    tags = set(re.split(settings.tag_delims, s))
+def get_tags(s, config):
+    tags = set(re.split(config["tag_delims"], s))
 
-    if not settings.case_sensitive:
+    if not config.case_sensitive:
         tags = set([x.lower() for x in tags])
 
     return set(filter(bool, tags)) # strain out empty strings
 
 
-def valid_tag(tag):
+def valid_tag(tag, config):
     if tag == "":
         return False
-    return re.search(settings.tag_delims, tag) == None
+    return re.search(config["tag_delims"], tag) == None
 
 
 
@@ -102,7 +102,7 @@ Settings
 
 # the main settings object with default settings
 # (defaults are used for when no .tagdir file is found)
-class Settings:
+class Config:
 
 
     # the root directory for tag operations with dirs
@@ -110,7 +110,7 @@ class Settings:
     root_dir = ""
 
     # default settings
-    settings = {
+    attrs = {
         "use_dirs"         : False,
         "tag_delims"       : "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]",
         "default_delim"    : "_",
@@ -124,7 +124,7 @@ class Settings:
     def __init__(self, path="", overrides={}):
 
         self.root_dir = find_above(path, TAGDIR_FILENAME)
-        self.settings.use_dirs = (self.root_dir != "") # could eventually be disabled by an option
+        self.attrs.use_dirs = (self.root_dir != "") # could eventually be disabled by an option
 
         # if we found a .tagdir file, read it
         if self.root_dir != "":
@@ -135,9 +135,13 @@ class Settings:
         self._override(overrides)
 
 
+    def __getitem__(self, key):
+        return self.attrs.get(key, None)
+
+
     def _override(self, settings):
         for key in settings:
-            self.settings[key] == settings[key]
+            self.attrs[key] == settings[key]
 
 
     def _load_config(self, config_file):
@@ -145,7 +149,7 @@ class Settings:
         config.read(config_file)
 
         if TAGDIR_SECTION in config:
-            for key in self.settings:
+            for key in self.attrs:
                 if key in config[TAGDIR_SECTION]:
                     print("found key: %s" % key)
 
@@ -155,20 +159,17 @@ class Settings:
 
 
 
-# import this object for settings
-settings = Settings()
-
-
-
 
 """
 Main File Class
 """
 
 class File:
-    def __init__(self, filestr, settings=None):
+    def __init__(self, filestr, config={}):
         # ensure that paths are always absolute
         filestr = os.path.abspath(filestr)
+
+        self.config = Settings(filestr, config)
 
         # save a copy of the original path
         self.filestr = filestr
@@ -179,8 +180,8 @@ class File:
 
         # if dirs are being used, do NOT consider the path
         # to the root tag directory
-        if settings.use_dirs:
-            self.dirs = os.path.relpath(self.dirs, settings.root_dir)
+        if self.config["use_dirs"]:
+            self.dirs = os.path.relpath(self.dirs, self.config["root_dir"])
 
 
     def __str__(self):
@@ -188,8 +189,8 @@ class File:
         filename = self.name + self.ext
 
         # if a root dir was used, resolve the reference
-        if settings.use_dirs:
-            path = os.path.join(settings.root_dir, path)
+        if self.config["use_dirs"]:
+            path = os.path.join(self.config["root_dir"], path)
 
         path = os.path.join(path, filename)
 
@@ -202,10 +203,10 @@ class File:
 
         tags = set()
 
-        tags.update(get_tags(self.name))
+        tags.update(get_tags(self.name, self.config))
 
-        if settings.use_dirs:
-            tags.update(get_tags(self.dirs))
+        if self.config["use_dirs"]:
+            tags.update(get_tags(self.dirs, self.config))
 
         return tags
 
@@ -214,8 +215,8 @@ class File:
         if has_tag(self.name, tag):
             return True
 
-        if settings.use_dirs:
-            if has_tag(self.dirs, tag):
+        if self.config["use_dirs"]:
+            if has_tag(self.dirs, tag, self.config):
                 return True
 
         return False
@@ -232,11 +233,11 @@ class File:
 
         # reposition the file in the tree, favoring tags
         # in the form of directory names
-        if settings.use_dirs:
+        if self.config["use_dirs"]:
             self.__resolve_dirs()
 
         if self.name == "":
-            self.name = settings.no_tags_filename
+            self.name = self.config["no_tags_filename"]
 
 
     def __add(self, tag):
@@ -249,7 +250,7 @@ class File:
             return
 
         if self.name != "":
-            tag += settings.default_delim
+            tag += self.config["default_delim"]
 
         self.name = tag + self.name
 
@@ -264,23 +265,23 @@ class File:
         # WARNING: the order here is important. Deleting tags from the front or the
         # back will cause inner tags to become front or back tags. This causes
         # problems if there are two of the same tag adjacent to one-another.
-        mid_pattern   = ("(?<=%s)" % settings.tag_delims) + tag + settings.tag_delims
+        mid_pattern   = ("(?<=%s)" % self.config["tag_delims"]) + tag + self.config["tag_delims"]
 
         #                (^|[ .,_-])tag($|[ .,_-])
-        edge_pattern  = "(^|" + settings.tag_delims + ")" + tag + "($|" + settings.tag_delims + ")"
+        edge_pattern  = "(^|" + self.config["tag_delims"] + ")" + tag + "($|" + self.config["tag_delims"] + ")"
 
         # erase any tag instances from the name
         self.name = re.sub(mid_pattern, "", self.name)
         self.name = re.sub(edge_pattern, "", self.name)
 
         # remove tags from the dirs
-        if settings.use_dirs:
+        if self.config["use_dirs"]:
             self.dirs = re.sub(mid_pattern, "", self.dirs)
             self.dirs = re.sub(edge_pattern, "", self.dirs)
 
 
 
-    # Only used if settings.use_dirs == True
+    # Only used if self.config["use_dirs"] == True
     # Sinks a file back down the directory tree, according to its tags
     # Directories are favored as tag storage. Also handles deletion of tags
     # from dir names carrying multiple tags
@@ -288,7 +289,7 @@ class File:
         tags = self.get_tags()
 
         # recurse to find the best directory path for this tagset
-        path, remaining_tags = find_best_path(settings.root_dir, tags)
+        path, remaining_tags = find_best_path(self.config.root_dir, self.config.root_dir, tags)
 
         # find out which tags were handled by directories
         # and remove them from the filename
@@ -296,7 +297,7 @@ class File:
             self.__remove(tag)
 
         # do this AFTER, since self.__remove() will removed tags from the dirs
-        self.dirs = os.path.relpath(path, settings.root_dir)
+        self.dirs = os.path.relpath(path, self.config["root_dir"])
 
         # ensure that any remaining tags are encoded in the filename
         # this handles cases where directories contain multiple tags
