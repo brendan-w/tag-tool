@@ -20,36 +20,6 @@ TAGDIR_SECTION = "tagdir"
 General Utils
 """
 
-# recursive function that determines the filepath that encodes the most
-# of the given tagset.
-def find_best_path(path, tags, config):
-
-    best_path = path
-    best_tags_left = set(tags) # goal is to minimize len() for this
-
-    # search all of the directories at the current path
-    for d in dirs_at(os.path.join(config.root_dir, path)):
-
-        d_tags = get_tags(d, config)
-
-        # if the tags of the directory name are all tags that we're looking for
-        if all([t in tags for t in d_tags]):
-            # we've found a valid dir to put the file in
-            
-            # prepare to recurse by removing the tags consumed by this dir name
-            next_tags = set(tags).difference(d_tags)
-
-            # recurse
-            r = find_best_path(os.path.join(path, d), next_tags, config)
-
-            # check to see if a better score was achieved
-            if(len(r[1]) < len(best_tags_left)):
-                best_path      = r[0]
-                best_tags_left = r[1]
-
-        # skip directories that contain tags we AREN'T looking for 
-
-    return (best_path, best_tags_left)
 
 
 # recursively finds the nearest .tagdir file denoting the limit for moving files
@@ -66,32 +36,6 @@ def find_above(path, filename):
 # lists only directories at the given path
 def dirs_at(path):
     return [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
-
-
-# searches for a tag in an arbitrary string
-def has_tag(s, tag, config):
-
-    flags = 0 if config["case_sensitive"] else re.IGNORECASE
-
-    #           (^|[ .,_-])tag($|[ .,_-])
-    pattern  = "(^|" + config["tag_delims"] + ")" + tag + "($|" + config["tag_delims"] + ")"
-    return re.search(pattern, s, flags) != None
-
-
-# returns the tagset for an arbitrary string
-def get_tags(s, config):
-    tags = set(re.split(config["tag_delims"], s))
-
-    if not config["case_sensitive"]:
-        tags = set([x.lower() for x in tags])
-
-    return set(filter(bool, tags)) # strain out empty strings
-
-
-def valid_tag(tag, config):
-    if tag == "":
-        return False
-    return re.search(config["tag_delims"], tag) == None
 
 
 
@@ -134,7 +78,7 @@ class Config:
         # override with command line options
         self._override(overrides)
 
-        # turn tag_delims into a regex
+        # turn tag_delims into a regex class
         self.attrs["tag_delims"] = "[" + re.escape(self.attrs["tag_delims"]) + "]"
 
 
@@ -180,6 +124,8 @@ class File:
         self.dirs, filestr  = os.path.split(filestr)
         self.name, self.ext = os.path.splitext(filestr)
 
+        # load the config for this file
+        # considers .tagdir rules, and then any overrides given in "config"
         self.config = Config(self.dirs, config)
 
         # if dirs are being used, do NOT consider the path
@@ -207,20 +153,20 @@ class File:
 
         tags = set()
 
-        tags.update(get_tags(self.name, self.config))
+        tags.update(self._raw_get_tags(self.name))
 
         if self.config["use_dirs"]:
-            tags.update(get_tags(self.dirs, self.config))
+            tags.update(self._raw_get_tags(self.dirs))
 
         return tags
 
 
     def has_tag(self, tag):
-        if has_tag(self.name, tag, self.config):
+        if self._raw_has_tag(self.name, tag):
             return True
 
         if self.config["use_dirs"]:
-            if has_tag(self.dirs, tag, self.config):
+            if self._raw_has_tag(self.dirs, tag):
                 return True
 
         return False
@@ -229,22 +175,48 @@ class File:
     def add_remove_tags(self, add_tags, remove_tags):
         # remove the requested tags
         for tag in remove_tags:
-            self.__remove(tag)
+            self._remove(tag)
 
         # add the requested tags
         for tag in add_tags:
-            self.__add(tag)
+            self._add(tag)
 
         # reposition the file in the tree, favoring tags
         # in the form of directory names
         if self.config["use_dirs"]:
-            self.__resolve_dirs()
+            self._resolve_dirs()
 
         if self.name == "":
             self.name = self.config["no_tags_filename"]
 
 
-    def __add(self, tag):
+    # def valid_tag(tag, config):
+    #     if tag == "":
+    #         return False
+    #     return re.search(config["tag_delims"], tag) == None
+
+
+    # searches for a tag in an arbitrary string
+    def _raw_has_tag(self, s, tag):
+
+        flags = 0 if self.config["case_sensitive"] else re.IGNORECASE
+
+        #           (^|[ .,_-])tag($|[ .,_-])
+        pattern  = "(^|" + self.config["tag_delims"] + ")" + tag + "($|" + self.config["tag_delims"] + ")"
+        return re.search(pattern, s, flags) != None
+
+
+    # returns the tagset for an arbitrary string
+    def _raw_get_tags(self, s):
+        tags = set(re.split(self.config["tag_delims"], s))
+
+        if not self.config["case_sensitive"]:
+            tags = set([x.lower() for x in tags])
+
+        return set(filter(bool, tags)) # strain out empty strings
+
+
+    def _add(self, tag):
         # adds a tag to this file's name
         # if there is a dir to encode this tag, it will be removed from
         # the filename in the resolve_dirs() function
@@ -259,7 +231,7 @@ class File:
         self.name = tag + self.name
 
 
-    def __remove(self, tag):
+    def _remove(self, tag):
         """ remove tags from the name """
 
         # Hard to combine these into one regex because python complains about not
@@ -289,22 +261,54 @@ class File:
     # Sinks a file back down the directory tree, according to its tags
     # Directories are favored as tag storage. Also handles deletion of tags
     # from dir names carrying multiple tags
-    def __resolve_dirs(self):
+    def _resolve_dirs(self):
         tags = self.get_tags()
 
         # recurse to find the best directory path for this tagset
-        path, remaining_tags = find_best_path(self.config.root_dir, tags, self.config)
+        path, remaining_tags = self._find_best_path(self.config.root_dir, tags)
 
         # find out which tags were handled by directories
         # and remove them from the filename
         for tag in tags.difference(remaining_tags):
-            self.__remove(tag)
+            self._remove(tag)
 
-        # do this AFTER, since self.__remove() will removed tags from the dirs
+        # do this AFTER, since self._remove() will removed tags from the dirs
         self.dirs = os.path.relpath(path, self.config.root_dir)
 
         # ensure that any remaining tags are encoded in the filename
         # this handles cases where directories contain multiple tags
-        # self.__add() will skip tags that are already present
+        # self._add() will skip tags that are already present
         for tag in remaining_tags:
-            self.__add(tag)
+            self._add(tag)
+
+
+    # recursive function that determines the filepath that encodes the most
+    # of the given tagset.
+    def _find_best_path(self, path, tags):
+
+        best_path = path
+        best_tags_left = set(tags) # goal is to minimize len() for this
+
+        # search all of the directories at the current path
+        for d in dirs_at(os.path.join(self.config.root_dir, path)):
+
+            d_tags = self._raw_get_tags(d)
+
+            # if the tags of the directory name are all tags that we're looking for
+            if all([t in tags for t in d_tags]):
+                # we've found a valid dir to put the file in
+                
+                # prepare to recurse by removing the tags consumed by this dir name
+                next_tags = set(tags).difference(d_tags)
+
+                # recurse
+                r = self._find_best_path(os.path.join(path, d), next_tags)
+
+                # check to see if a better score was achieved
+                if(len(r[1]) < len(best_tags_left)):
+                    best_path      = r[0]
+                    best_tags_left = r[1]
+
+            # skip directories that contain tags we AREN'T looking for 
+
+        return (best_path, best_tags_left)

@@ -63,10 +63,10 @@ def main():
         return
 
     # check for delimeters in the tags
-    if not all([ valid_tag(tag) for tag in add_tags ]) or \
-       not all([ valid_tag(tag) for tag in remove_tags ]):
-        print("tags cannot contain delimeters")
-        return
+    # if not all([ valid_tag(tag) for tag in add_tags ]) or \
+    #    not all([ valid_tag(tag) for tag in remove_tags ]):
+    #     print("tags cannot contain delimeters")
+    #     return
 
     # the get_tags() function lower()s things for case insensitivity
     if not settings.case_sensitive:

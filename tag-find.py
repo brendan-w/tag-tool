@@ -138,9 +138,9 @@ def main():
         return
 
     # check for delimeters in the tags
-    if not all([ valid_tag(op.tag) for op in operations ]):
-        print("tags cannot be empty strings, or contain delimeters")
-        return
+    # if not all([ valid_tag(op.tag) for op in operations ]):
+    #     print("tags cannot be empty strings, or contain delimeters")
+    #     return
 
     # run the selection
     files = select(operations)
