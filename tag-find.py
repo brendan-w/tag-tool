@@ -63,7 +63,7 @@ def build_command(operations):
             find_flags += " %s *%s*" % (flag, op.tag)
 
     # insert the selection flags into the main find command
-    return settings.find_cmd % (settings.root_dir, find_flags)
+    return settings.find_cmd.format(dir=settings.root_dir, pattern=find_flags)
 
 
 # function that uses `find` to retrieve a basic list of files matching

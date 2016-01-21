@@ -1,8 +1,8 @@
 [tagdir]
 use_dirs: True
-tag_delims: ,_ &=%.-+()[]{}/\
+tag_delims: ,_ &=.-+()[]{}/\
 default_delim: _
 no_tags_filename: unknown
-find_cmd: find %s -type f %s ! -path */.* ! -perm -o=x
+find_cmd: find {dir} -type f {pattern} ! -path */.* ! -perm -o=x
 case_sensitive: True
 verbose: False

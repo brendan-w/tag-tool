@@ -9,6 +9,7 @@ cwd = os.getcwd()
 
 from core import *
 
+default_config = Config(cwd)
 
 """
 test_tree/
@@ -27,19 +28,21 @@ test_tree/
 """
 
 
+NO_TAGS_FILENAME = "unknown" # todo: set this to the default
+
 
 """
 Utils
 """
 
-def try_add_remove(f, add_tags, remove_tags):
-    f = File(os.path.join(cwd, f))
+def try_add_remove(config, f, add_tags, remove_tags):
+    f = File(os.path.join(cwd, f), config)
     f.add_remove_tags(add_tags, remove_tags)
     return os.path.relpath(str(f), cwd)
 
 
 def try_find_best_path(tags):
-    r = find_best_path(cwd, set(tags))
+    r = find_best_path(cwd, set(tags), default_config)
     return (os.path.relpath(r[0], cwd), r[1])
 
 
@@ -66,87 +69,87 @@ def test_find_best_path():
 
 
 def test_core_valid_tag():
-    assert(     valid_tag("a") )
-    assert(     valid_tag("abcdefg") )
-    assert( not valid_tag("") )
-    assert( not valid_tag("_a") )
-    assert( not valid_tag("a_") )
-    assert( not valid_tag("a_b") )
+    assert(     valid_tag("a", default_config) )
+    assert(     valid_tag("abcdefg", default_config) )
+    assert( not valid_tag("", default_config) )
+    assert( not valid_tag("_a", default_config) )
+    assert( not valid_tag("a_", default_config) )
+    assert( not valid_tag("a_b", default_config) )
 
 
 def test_core_get_tags():
-    assert( get_tags("a")   == {"a"} )
-    assert( get_tags("ab")  == {"ab"} )
-    assert( get_tags("a_b") == {"a", "b"} )
-    assert( get_tags("ab_cd") == {"ab", "cd"} )
-    assert( get_tags("a_b_c_d") == {"a", "b", "c", "d"} )
-    assert( get_tags("a_a_a_d") == {"a", "d"} )
+    assert( get_tags("a", default_config)   == {"a"} )
+    assert( get_tags("ab", default_config)  == {"ab"} )
+    assert( get_tags("a_b", default_config) == {"a", "b"} )
+    assert( get_tags("ab_cd", default_config) == {"ab", "cd"} )
+    assert( get_tags("a_b_c_d", default_config) == {"a", "b", "c", "d"} )
+    assert( get_tags("a_a_a_d", default_config) == {"a", "d"} )
 
 
 def test_core_has_tag():
-    assert(     has_tag("a", "a") )
-    assert(     has_tag("a_a", "a") )
-    assert(     has_tag("a_b", "a") )
-    assert(     has_tag("a_b", "b") )
-    assert(     has_tag("_a_b_", "a") )
-    assert(     has_tag("_a_b_", "b") )
-    assert( not has_tag("a_b", "c") )
+    assert(     has_tag("a", "a", default_config) )
+    assert(     has_tag("a_a", "a", default_config) )
+    assert(     has_tag("a_b", "a", default_config) )
+    assert(     has_tag("a_b", "b", default_config) )
+    assert(     has_tag("_a_b_", "a", default_config) )
+    assert(     has_tag("_a_b_", "b", default_config) )
+    assert( not has_tag("a_b", "c", default_config) )
 
 
 def test_tag_add_name():
     # DON'T use directories
-    settings.use_dirs = False
+    config = { "use_dirs": False }
 
     # don't add tags that are already present
-    assert( try_add_remove("a/a_b_c", ["a"], []) == "a/a_b_c" )
+    assert( try_add_remove(config, "a/a_b_c", ["a"], []) == "a/a_b_c" )
 
     # add tags
-    assert( try_add_remove("a/a_b_c", ["z"], []) == "a/z_a_b_c" )
+    assert( try_add_remove(config, "a/a_b_c", ["z"], []) == "a/z_a_b_c" )
 
     # combination of the two above
-    assert( try_add_remove("a/a_b_c", ["z", "a"], []) == "a/z_a_b_c" )
+    assert( try_add_remove(config, "a/a_b_c", ["z", "a"], []) == "a/z_a_b_c" )
 
     # add multiple tags
-    assert( try_add_remove("a/a_b_c", ["x", "y", "z"], []) == "a/z_y_x_a_b_c" )
+    assert( try_add_remove(config, "a/a_b_c", ["x", "y", "z"], []) == "a/z_y_x_a_b_c" )
 
 
 def test_tag_remove_name():
     # DON'T use directories
-    settings.use_dirs = False
+    config = { "use_dirs": False }
 
     # remove tags from front of name
-    assert( try_add_remove("a/a_b_c", [], ["a"]) == "a/b_c" )
+    assert( try_add_remove(config, "a/a_b_c", [], ["a"]) == "a/b_c" )
 
     # remove tags from middle of name
-    assert( try_add_remove("a/a_b_c", [], ["b"]) == "a/a_c" )
+    assert( try_add_remove(config, "a/a_b_c", [], ["b"]) == "a/a_c" )
 
     # remove tags from end of name
-    assert( try_add_remove("a/a_b_c", [], ["c"]) == "a/a_b" )
+    assert( try_add_remove(config, "a/a_b_c", [], ["c"]) == "a/a_b" )
 
     # remove multiple tags
-    assert( try_add_remove("a/a_b_c", [], ["a", "b"]) == "a/c" )
+    assert( try_add_remove(config, "a/a_b_c", [], ["a", "b"]) == "a/c" )
 
     # remove multiple tags
-    assert( try_add_remove("a/a_b_c", [], ["b", "c"]) == "a/a" )
+    assert( try_add_remove(config, "a/a_b_c", [], ["b", "c"]) == "a/a" )
 
     # remove all tags
-    assert( try_add_remove("a/a_b_c", [], ["a", "b", "c"]) == "a/" + settings.no_tags_filename )
+    assert( try_add_remove(config, "a/a_b_c", [], ["a", "b", "c"]) == "a/" + NO_TAGS_FILENAME )
 
 
 
 def test_tag_add_dirs():
     # USE directories
-    settings.use_dirs = True
+    config = { "use_dirs": True }
 
     # don't add tags that are already present, and recompute dirs
     # also an ambiguous case (see note in test_dir_computer)
-    r = try_add_remove("a/a_b_c", ["a"], [])
+    r = try_add_remove(config, "a/a_b_c", ["a"], [])
     assert( r == "a/b/c" \
             or \
             r == "a/c/b" )
 
     # don't move to a new directory unless ALL tags match
-    r = try_add_remove("a/a_b_c", ["f"], [])
+    r = try_add_remove(config, "a/a_b_c", ["f"], [])
     assert( r == "a/b/f_c" \
             or \
             r == "a/c/f_b")
@@ -154,18 +157,18 @@ def test_tag_add_dirs():
 
 def test_tag_remove_dirs():
     # USE directories
-    settings.use_dirs = True
+    config = { "use_dirs": True }
 
     # general tag removal
-    assert( try_add_remove("a/a_b_c", [], ["a"])      == "b_c" )
-    assert( try_add_remove("f_g/a_b", [], ["a"])      == "f_g/b" )
-    assert( try_add_remove("f_g/a_b", [], ["f", "g"]) == "a/b/" + settings.no_tags_filename )
+    assert( try_add_remove(config, "a/a_b_c", [], ["a"])      == "b_c" )
+    assert( try_add_remove(config, "f_g/a_b", [], ["a"])      == "f_g/b" )
+    assert( try_add_remove(config, "f_g/a_b", [], ["f", "g"]) == "a/b/" + NO_TAGS_FILENAME )
 
     # tag removal causing tags in name to be used in dirs
-    assert( try_add_remove("a/a_b_c",   [], ["c"])    == "a/b/" + settings.no_tags_filename )
+    assert( try_add_remove(config, "a/a_b_c",   [], ["c"])    == "a/b/" + NO_TAGS_FILENAME )
 
     # tag removal from multi-tag directories
-    assert( try_add_remove("f_g/a_b", [], ["f"])      == "a/b/g" )
-    assert( try_add_remove("f_g/a_b", [], ["g"])      == "a/b/f" )
-    assert( try_add_remove("f_g/a_b", [], ["f", "a"]) == "g_b" )
-    assert( try_add_remove("f_g/a_b", [], ["f", "b"]) == "a/g" )
+    assert( try_add_remove(config, "f_g/a_b", [], ["f"])      == "a/b/g" )
+    assert( try_add_remove(config, "f_g/a_b", [], ["g"])      == "a/b/f" )
+    assert( try_add_remove(config, "f_g/a_b", [], ["f", "a"]) == "g_b" )
+    assert( try_add_remove(config, "f_g/a_b", [], ["f", "b"]) == "a/g" )

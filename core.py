@@ -22,15 +22,15 @@ General Utils
 
 # recursive function that determines the filepath that encodes the most
 # of the given tagset.
-def find_best_path(root_dir, path, tags):
+def find_best_path(path, tags, config):
 
     best_path = path
     best_tags_left = set(tags) # goal is to minimize len() for this
 
     # search all of the directories at the current path
-    for d in dirs_at(os.path.join(root_dir, path)):
+    for d in dirs_at(os.path.join(config.root_dir, path)):
 
-        d_tags = get_tags(d)
+        d_tags = get_tags(d, config)
 
         # if the tags of the directory name are all tags that we're looking for
         if all([t in tags for t in d_tags]):
@@ -40,7 +40,7 @@ def find_best_path(root_dir, path, tags):
             next_tags = set(tags).difference(d_tags)
 
             # recurse
-            r = find_best_path(root_dir, os.path.join(path, d), next_tags)
+            r = find_best_path(os.path.join(path, d), next_tags, config)
 
             # check to see if a better score was achieved
             if(len(r[1]) < len(best_tags_left)):
@@ -82,7 +82,7 @@ def has_tag(s, tag, config):
 def get_tags(s, config):
     tags = set(re.split(config["tag_delims"], s))
 
-    if not config.case_sensitive:
+    if not config["case_sensitive"]:
         tags = set([x.lower() for x in tags])
 
     return set(filter(bool, tags)) # strain out empty strings
@@ -112,10 +112,10 @@ class Config:
     # default settings
     attrs = {
         "use_dirs"         : False,
-        "tag_delims"       : "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]",
+        "tag_delims"       : " ,_&=.-+()[]{}/\\",
         "default_delim"    : "_",
         "no_tags_filename" : "unknown",
-        "find_cmd"         : "find %s -type f %s ! -path */.* ! -perm -o=x",
+        "find_cmd"         : "find {dir} -type f {pattern} ! -path */.* ! -perm -o=x",
         "case_sensitive"   : True,
         "verbose"          : False
     }
@@ -124,7 +124,7 @@ class Config:
     def __init__(self, path="", overrides={}):
 
         self.root_dir = find_above(path, TAGDIR_FILENAME)
-        self.attrs.use_dirs = (self.root_dir != "") # could eventually be disabled by an option
+        self.attrs["use_dirs"] = (self.root_dir != "") # could eventually be disabled by an option
 
         # if we found a .tagdir file, read it
         if self.root_dir != "":
@@ -134,14 +134,17 @@ class Config:
         # override with command line options
         self._override(overrides)
 
+        # turn tag_delims into a regex
+        self.attrs["tag_delims"] = "[" + re.escape(self.attrs["tag_delims"]) + "]"
+
 
     def __getitem__(self, key):
         return self.attrs.get(key, None)
 
 
-    def _override(self, settings):
-        for key in settings:
-            self.attrs[key] == settings[key]
+    def _override(self, overrides):
+        for key in overrides:
+            self.attrs[key] = overrides[key]
 
 
     def _load_config(self, config_file):
@@ -151,6 +154,7 @@ class Config:
         if TAGDIR_SECTION in config:
             for key in self.attrs:
                 if key in config[TAGDIR_SECTION]:
+                    self.attrs[key] = config[TAGDIR_SECTION][key]
                     print("found key: %s" % key)
 
 
@@ -169,8 +173,6 @@ class File:
         # ensure that paths are always absolute
         filestr = os.path.abspath(filestr)
 
-        self.config = Settings(filestr, config)
-
         # save a copy of the original path
         self.filestr = filestr
 
@@ -178,10 +180,12 @@ class File:
         self.dirs, filestr  = os.path.split(filestr)
         self.name, self.ext = os.path.splitext(filestr)
 
+        self.config = Config(self.dirs, config)
+
         # if dirs are being used, do NOT consider the path
         # to the root tag directory
         if self.config["use_dirs"]:
-            self.dirs = os.path.relpath(self.dirs, self.config["root_dir"])
+            self.dirs = os.path.relpath(self.dirs, self.config.root_dir)
 
 
     def __str__(self):
@@ -190,7 +194,7 @@ class File:
 
         # if a root dir was used, resolve the reference
         if self.config["use_dirs"]:
-            path = os.path.join(self.config["root_dir"], path)
+            path = os.path.join(self.config.root_dir, path)
 
         path = os.path.join(path, filename)
 
@@ -212,7 +216,7 @@ class File:
 
 
     def has_tag(self, tag):
-        if has_tag(self.name, tag):
+        if has_tag(self.name, tag, self.config):
             return True
 
         if self.config["use_dirs"]:
@@ -289,7 +293,7 @@ class File:
         tags = self.get_tags()
 
         # recurse to find the best directory path for this tagset
-        path, remaining_tags = find_best_path(self.config.root_dir, self.config.root_dir, tags)
+        path, remaining_tags = find_best_path(self.config.root_dir, tags, self.config)
 
         # find out which tags were handled by directories
         # and remove them from the filename
@@ -297,7 +301,7 @@ class File:
             self.__remove(tag)
 
         # do this AFTER, since self.__remove() will removed tags from the dirs
-        self.dirs = os.path.relpath(path, self.config["root_dir"])
+        self.dirs = os.path.relpath(path, self.config.root_dir)
 
         # ensure that any remaining tags are encoded in the filename
         # this handles cases where directories contain multiple tags
