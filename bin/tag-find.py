@@ -4,7 +4,8 @@ import re
 import sys
 import subprocess
 from collections import namedtuple
-from core import *
+
+from tagtool import Filename
 
 
 
@@ -86,7 +87,7 @@ def find_base_files(operations):
 # returns boolean for whether the file was selected
 def match(filestr, operations):
 
-    f = File(filestr)
+    f = Filename(filestr)
 
     matched = True
 

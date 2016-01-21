@@ -3,7 +3,8 @@
 import os
 import re
 import sys
-from core import *
+
+from tagtool import Filename
 
 
 help_text = """
@@ -23,7 +24,7 @@ def run(files):
     tags = set()
 
     for filestr in files:
-        f = File(filestr)
+        f = Filename(filestr)
         tags.update(f.get_tags())
         os.rename(filestr, str(f))
 

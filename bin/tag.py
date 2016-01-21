@@ -3,7 +3,8 @@
 import os
 import re
 import sys
-from core import *
+
+from tagtool import Filename
 
 
 help_text = """
@@ -23,12 +24,15 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 """
 
 
-def run(add_tags, remove_tags, files):
+def run(files, add_tags, remove_tags, config):
     for filestr in files:
-        f = File(filestr)
-        f.add_remove_tags(add_tags, remove_tags)
+
+        f = Filename(filestr, config)
+        f.add_remove_tags(add_tags, remove_tags) # run the tagger
         os.rename(filestr, str(f))
-        print("‘%s’ -> ‘%s’" % (filestr, str(f)))
+
+        if config["verbose"]:
+            print("‘%s’ -> ‘%s’" % (filestr, str(f)))
 
 
 def main():
@@ -36,14 +40,17 @@ def main():
     remove_tags = set()
     files       = set()
 
+    # config params that will override the .tagdir params
+    config = {}
+
     for option in sys.argv[1:]:
         if option == "--help":
             print(help_text)
             return
         elif option == "--verbose":
-            settings.verbose = True
+            config["verbose"] = True
         elif option == "--nocase":
-            settings.case_sensitive = False
+            config["case_sensitive"] = False
         else:
             if option[0] == "+":
                 add_tags.add(option[1:]);
@@ -73,7 +80,7 @@ def main():
         remove_tags = set([tag.lower() for tag in remove_tags])
 
     # run the tagger
-    run(add_tags, remove_tags, files)
+    run(files, add_tags, remove_tags, config)
 
 if(__name__ == "__main__"):
     main()
