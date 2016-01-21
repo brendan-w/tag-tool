@@ -4,16 +4,6 @@ import os
 import configparser
 
 
-"""
-Constants
-"""
-
-# the name of the settings file that specifies the scope of directory tagging
-tagdir_filename = ".tagdir"
-
-
-
-
 
 """
 General Utils
@@ -103,20 +93,52 @@ Settings
 # (defaults are used for when no .tagdir file is found)
 class Settings:
 
-    root_dir         = ""
-    use_dirs         = False
-    tag_delims       = "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]"
-    default_delim    = "_"
-    no_tags_filename = "unknown"
-    find_cmd         = "find %s -type f %s ! -path */.* ! -perm -o=x";
-    case_sensitive   = True
-    verbose          = False
+    # the name of the settings file that specifies the scope of directory tagging
+    TAGDIR_FILENAME = ".tagdir"
 
-    def __init__(self):
-        self.root_dir = find_above(os.getcwd(), tagdir_filename)
+    # the root directory for tag operations with dirs
+    # should only be used when settings.use_dirs == True
+    root_dir = ""
+
+    # default settings
+    settings = {
+        use_dirs         : False,
+        tag_delims       : "[ ,_&=%%\\.\\-\\+\\(\\)\\[\\]\\{\\}\\/\\\\]",
+        default_delim    : "_",
+        no_tags_filename : "unknown",
+        find_cmd         : "find %s -type f %s ! -path */.* ! -perm -o=x",
+        case_sensitive   : True,
+        verbose          : False
+    }
+
+
+    def __init__(self, path="", overrides={}):
+
+        self.root_dir = find_above(path, TAGDIR_FILENAME)
         self.use_dirs = (self.root_dir != "") # could eventually be disabled by an option
-        if self.root_dir == "":
-            self.root_dir = os.getcwd()
+
+        # if we found a .tagdir file, read it
+        if self.root_dir != "":
+            tagdir_file = os.path.join(self.root_dir, tagdir_filename)
+            self._load_config(tagdir_file)
+
+        # override with command line options
+        self._override(overrides)
+
+
+    def _override(self, settings):
+        for key in settings:
+            self.settings[key] == settings[key]
+
+
+    def _load_config(self, config_file):
+        parser = configparser.SafeConfigParser()
+        parser.read(config_file)
+
+
+    def write_config(self, file_name):
+        pass
+
 
 
 # import this object for settings
@@ -130,7 +152,7 @@ Main File Class
 """
 
 class File:
-    def __init__(self, filestr):
+    def __init__(self, filestr, settings=None):
         # ensure that paths are always absolute
         filestr = os.path.abspath(filestr)
 
