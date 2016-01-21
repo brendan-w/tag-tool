@@ -22,4 +22,10 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[],
+    scripts=[
+        'bin/tag',
+        'bin/tag-find',
+        'bin/tag-list',
+        'bin/tag-dialog',
+    ],
 )

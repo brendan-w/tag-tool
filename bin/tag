@@ -18,7 +18,7 @@ Commands:
 \t-[TAG]   removes a tag from the given files
 
 Options:
-\t--nocase     performs case insensitive tag removal
+\t--nocase    performs case insensitive tag removal
 \t--verbose   prints the new filepath for each renamed file
 \t--help      prints this help text and exits
 
@@ -75,6 +75,7 @@ def main():
 
     # run the tagger
     run(files, add_tags, remove_tags, config)
+
 
 if(__name__ == "__main__"):
     main()
