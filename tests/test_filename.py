@@ -6,16 +6,17 @@ from tagtool import Filename, get_config
 
 # move into our testing directory
 os.chdir("tree/")
+root_dir = os.path.abspath(os.getcwd())
 
-default_file = "a/a_b_c"
-default_config = get_config("./")
+# a default Filename object for testing with
+f = Filename("a/a_b_c")
 
 # make sure that the config found the .tagdir
-assert(default_config["root_dir"]         == "./")
-assert(default_config["use_dirs"]         == True)
-assert(default_config["default_delim"]    == "_")
-assert(default_config["no_tags_filename"] == "unknown")
-assert(default_config["case_sensitive"]   == True)
+assert(f.config["root_dir"]         == root_dir)
+assert(f.config["use_dirs"]         == True)
+assert(f.config["default_delim"]    == "_")
+assert(f.config["no_tags_filename"] == "unknown")
+assert(f.config["case_sensitive"]   == True)
 
 """
 tree/
@@ -45,14 +46,12 @@ def try_add_remove(config, f, add_tags, remove_tags):
     return os.path.relpath(str(f), cwd)
 
 
-def try_find_best_path(tags):
-    r = find_best_path(cwd, set(tags), default_config)
-    return (os.path.relpath(r[0], cwd), r[1])
 
+"""
+Private Filename functions
+"""
 
 def test_find_best_path():
-
-    f = Filename(default_file)
 
     # simple finding of directories
     assert( f._find_best_path("./", ["a"])      == ("./a",   set()) )
@@ -74,32 +73,25 @@ def test_find_best_path():
             r == ("./a/c", {"b"}) )
 
 
-# def test_core_valid_tag():
-#     assert(     valid_tag("a", default_config) )
-#     assert(     valid_tag("abcdefg", default_config) )
-#     assert( not valid_tag("", default_config) )
-#     assert( not valid_tag("_a", default_config) )
-#     assert( not valid_tag("a_", default_config) )
-#     assert( not valid_tag("a_b", default_config) )
+def test_raw_get_tags():
+
+    assert( f._raw_get_tags("a")       == {"a"} )
+    assert( f._raw_get_tags("ab")      == {"ab"} )
+    assert( f._raw_get_tags("a_b")     == {"a", "b"} )
+    assert( f._raw_get_tags("ab_cd")   == {"ab", "cd"} )
+    assert( f._raw_get_tags("a_b_c_d") == {"a", "b", "c", "d"} )
+    assert( f._raw_get_tags("a_a_a_d") == {"a", "d"} )
 
 
-# def test_core_get_tags():
-#     assert( get_tags("a", default_config)   == {"a"} )
-#     assert( get_tags("ab", default_config)  == {"ab"} )
-#     assert( get_tags("a_b", default_config) == {"a", "b"} )
-#     assert( get_tags("ab_cd", default_config) == {"ab", "cd"} )
-#     assert( get_tags("a_b_c_d", default_config) == {"a", "b", "c", "d"} )
-#     assert( get_tags("a_a_a_d", default_config) == {"a", "d"} )
+def test_raw_has_tag():
 
-
-# def test_core_has_tag():
-#     assert(     has_tag("a", "a", default_config) )
-#     assert(     has_tag("a_a", "a", default_config) )
-#     assert(     has_tag("a_b", "a", default_config) )
-#     assert(     has_tag("a_b", "b", default_config) )
-#     assert(     has_tag("_a_b_", "a", default_config) )
-#     assert(     has_tag("_a_b_", "b", default_config) )
-#     assert( not has_tag("a_b", "c", default_config) )
+    assert(     f._raw_has_tag("a", "a") )
+    assert(     f._raw_has_tag("a_a", "a") )
+    assert(     f._raw_has_tag("a_b", "a") )
+    assert(     f._raw_has_tag("a_b", "b") )
+    assert(     f._raw_has_tag("_a_b_", "a") )
+    assert(     f._raw_has_tag("_a_b_", "b") )
+    assert( not f._raw_has_tag("a_b", "c") )
 
 
 # def test_tag_add_name():
