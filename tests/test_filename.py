@@ -40,10 +40,13 @@ tree/
 Utils
 """
 
-def try_add_remove(config, f, add_tags, remove_tags):
-    f = File(os.path.join(cwd, f), config)
+def try_add_remove(f, add_tags, remove_tags, overrides):
+    # make a new file object
+    f = Filename(os.path.join(root_dir, f), overrides)
+    # run the tagger
     f.add_remove_tags(add_tags, remove_tags)
-    return os.path.relpath(str(f), cwd)
+    # return a concise path
+    return os.path.relpath(str(f), root_dir)
 
 
 
@@ -94,44 +97,49 @@ def test_raw_has_tag():
     assert( not f._raw_has_tag("a_b", "c") )
 
 
-# def test_tag_add_name():
-#     # DON'T use directories
-#     config = { "use_dirs": False }
+"""
+Tagging Logic
+"""
 
-#     # don't add tags that are already present
-#     assert( try_add_remove(config, "a/a_b_c", ["a"], []) == "a/a_b_c" )
+def test_tag_add_name():
 
-#     # add tags
-#     assert( try_add_remove(config, "a/a_b_c", ["z"], []) == "a/z_a_b_c" )
+    # DON'T use directories
+    overrides = { "use_dirs": False }
 
-#     # combination of the two above
-#     assert( try_add_remove(config, "a/a_b_c", ["z", "a"], []) == "a/z_a_b_c" )
+    # don't add tags that are already present
+    assert( try_add_remove("a/a_b_c", ["a"], [], overrides) == "a/a_b_c" )
 
-#     # add multiple tags
-#     assert( try_add_remove(config, "a/a_b_c", ["x", "y", "z"], []) == "a/z_y_x_a_b_c" )
+    # add tags
+    assert( try_add_remove("a/a_b_c", ["z"], [], overrides) == "a/z_a_b_c" )
+
+    # combination of the two above
+    assert( try_add_remove("a/a_b_c", ["z", "a"], [], overrides) == "a/z_a_b_c" )
+
+    # add multiple tags
+    assert( try_add_remove("a/a_b_c", ["x", "y", "z"], [], overrides) == "a/z_y_x_a_b_c" )
 
 
-# def test_tag_remove_name():
-#     # DON'T use directories
-#     config = { "use_dirs": False }
+def test_tag_remove_name():
+    # DON'T use directories
+    overrides = { "use_dirs": False }
 
-#     # remove tags from front of name
-#     assert( try_add_remove(config, "a/a_b_c", [], ["a"]) == "a/b_c" )
+    # remove tags from front of name
+    assert( try_add_remove("a/a_b_c", [], ["a"], overrides) == "a/b_c" )
 
-#     # remove tags from middle of name
-#     assert( try_add_remove(config, "a/a_b_c", [], ["b"]) == "a/a_c" )
+    # remove tags from middle of name
+    assert( try_add_remove("a/a_b_c", [], ["b"], overrides) == "a/a_c" )
 
-#     # remove tags from end of name
-#     assert( try_add_remove(config, "a/a_b_c", [], ["c"]) == "a/a_b" )
+    # remove tags from end of name
+    assert( try_add_remove("a/a_b_c", [], ["c"], overrides) == "a/a_b" )
 
-#     # remove multiple tags
-#     assert( try_add_remove(config, "a/a_b_c", [], ["a", "b"]) == "a/c" )
+    # remove multiple tags
+    assert( try_add_remove("a/a_b_c", [], ["a", "b"], overrides) == "a/c" )
 
-#     # remove multiple tags
-#     assert( try_add_remove(config, "a/a_b_c", [], ["b", "c"]) == "a/a" )
+    # remove multiple tags
+    assert( try_add_remove("a/a_b_c", [], ["b", "c"], overrides) == "a/a" )
 
-#     # remove all tags
-#     assert( try_add_remove(config, "a/a_b_c", [], ["a", "b", "c"]) == "a/" + default_config["no_tags_filename"] )
+    # remove all tags
+    assert( try_add_remove("a/a_b_c", [], ["a", "b", "c"], overrides) == "a/" + f.config["no_tags_filename"] )
 
 
 
