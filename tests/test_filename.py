@@ -42,11 +42,11 @@ Utils
 
 def try_add_remove(f, add_tags, remove_tags, overrides):
     # make a new file object
-    f = Filename(os.path.join(root_dir, f), overrides)
+    filename = Filename(os.path.join(root_dir, f), overrides)
     # run the tagger
-    f.add_remove_tags(add_tags, remove_tags)
+    filename.add_remove_tags(add_tags, remove_tags)
     # return a concise path
-    return os.path.relpath(str(f), root_dir)
+    return os.path.relpath(str(filename), root_dir)
 
 
 
@@ -143,38 +143,38 @@ def test_tag_remove_name():
 
 
 
-# def test_tag_add_dirs():
-#     # USE directories
-#     config = { "use_dirs": True }
+def test_tag_add_dirs():
+    # USE directories
+    overrides = { "use_dirs": True }
 
-#     # don't add tags that are already present, and recompute dirs
-#     # also an ambiguous case (see note in test_dir_computer)
-#     r = try_add_remove(config, "a/a_b_c", ["a"], [])
-#     assert( r == "a/b/c" \
-#             or \
-#             r == "a/c/b" )
+    # don't add tags that are already present, and recompute dirs
+    # also an ambiguous case (see note in test_dir_computer)
+    r = try_add_remove("a/a_b_c", ["a"], [], overrides)
+    assert( r == "a/b/c" \
+            or \
+            r == "a/c/b" )
 
-#     # don't move to a new directory unless ALL tags match
-#     r = try_add_remove(config, "a/a_b_c", ["f"], [])
-#     assert( r == "a/b/f_c" \
-#             or \
-#             r == "a/c/f_b")
+    # don't move to a new directory unless ALL tags match
+    r = try_add_remove("a/a_b_c", ["f"], [], overrides)
+    assert( r == "a/b/f_c" \
+            or \
+            r == "a/c/f_b")
 
 
-# def test_tag_remove_dirs():
-#     # USE directories
-#     config = { "use_dirs": True }
+def test_tag_remove_dirs():
+    # USE directories
+    overrides = { "use_dirs": True }
 
-#     # general tag removal
-#     assert( try_add_remove(config, "a/a_b_c", [], ["a"])      == "b_c" )
-#     assert( try_add_remove(config, "f_g/a_b", [], ["a"])      == "f_g/b" )
-#     assert( try_add_remove(config, "f_g/a_b", [], ["f", "g"]) == "a/b/" + default_config["no_tags_filename"] )
+    # general tag removal
+    assert( try_add_remove("a/a_b_c", [], ["a"], overrides)      == "b_c" )
+    assert( try_add_remove("f_g/a_b", [], ["a"], overrides)      == "f_g/b" )
+    assert( try_add_remove("f_g/a_b", [], ["f", "g"], overrides) == "a/b/" + f.config["no_tags_filename"] )
 
-#     # tag removal causing tags in name to be used in dirs
-#     assert( try_add_remove(config, "a/a_b_c",   [], ["c"])    == "a/b/" + default_config["no_tags_filename"] )
+    # tag removal causing tags in name to be used in dirs
+    assert( try_add_remove("a/a_b_c",   [], ["c"], overrides)    == "a/b/" + f.config["no_tags_filename"] )
 
-#     # tag removal from multi-tag directories
-#     assert( try_add_remove(config, "f_g/a_b", [], ["f"])      == "a/b/g" )
-#     assert( try_add_remove(config, "f_g/a_b", [], ["g"])      == "a/b/f" )
-#     assert( try_add_remove(config, "f_g/a_b", [], ["f", "a"]) == "g_b" )
-#     assert( try_add_remove(config, "f_g/a_b", [], ["f", "b"]) == "a/g" )
+    # tag removal from multi-tag directories
+    assert( try_add_remove("f_g/a_b", [], ["f"], overrides)      == "a/b/g" )
+    assert( try_add_remove("f_g/a_b", [], ["g"], overrides)      == "a/b/f" )
+    assert( try_add_remove("f_g/a_b", [], ["f", "a"], overrides) == "g_b" )
+    assert( try_add_remove("f_g/a_b", [], ["f", "b"], overrides) == "a/g" )
