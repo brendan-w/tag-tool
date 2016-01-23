@@ -1,13 +1,14 @@
 
 import re
 import os
-from .config import Config
+from .config import get_config
+from .utils import *
 
 
 class Filename:
     """ Class for manipulating filenames in a tag-based fashion """
 
-    def __init__(self, filestr, config={}):
+    def __init__(self, filestr, overrides={}):
         # ensure that paths are always absolute
         filestr = os.path.abspath(filestr)
 
@@ -19,13 +20,13 @@ class Filename:
         self.name, self.ext = os.path.splitext(filestr)
 
         # load the config for this file
-        # considers .tagdir rules, and then any overrides given in "config"
-        self.config = Config(self.dirs, config)
+        # considers .tagdir rules, and then any overrides given in "overrides"
+        self.config = get_config(self.dirs, overrides)
 
         # if dirs are being used, do NOT consider the path
         # to the root tag directory
         if self.config["use_dirs"]:
-            self.dirs = os.path.relpath(self.dirs, self.config.root_dir)
+            self.dirs = os.path.relpath(self.dirs, self.config["root_dir"])
 
 
     def __str__(self):
@@ -34,7 +35,7 @@ class Filename:
 
         # if a root dir was used, resolve the reference
         if self.config["use_dirs"]:
-            path = os.path.join(self.config.root_dir, path)
+            path = os.path.join(self.config["root_dir"], path)
 
         path = os.path.join(path, filename)
 
@@ -170,7 +171,7 @@ class Filename:
         tags = self.get_tags()
 
         # recurse to find the best directory path for this tagset
-        path, remaining_tags = self._find_best_path(self.config.root_dir, tags)
+        path, remaining_tags = self._find_best_path(self.config["root_dir"], tags)
 
         # find out which tags were handled by directories
         # and remove them from the filename
@@ -178,7 +179,7 @@ class Filename:
             self._remove(tag)
 
         # do this AFTER, since self._remove() will removed tags from the dirs
-        self.dirs = os.path.relpath(path, self.config.root_dir)
+        self.dirs = os.path.relpath(path, self.config["root_dir"])
 
         # ensure that any remaining tags are encoded in the filename
         # this handles cases where directories contain multiple tags
@@ -195,7 +196,7 @@ class Filename:
         best_tags_left = set(tags) # goal is to minimize len() for this
 
         # search all of the directories at the current path
-        for d in dirs_at(os.path.join(self.config.root_dir, path)):
+        for d in dirs_at(os.path.join(self.config["root_dir"], path)):
 
             d_tags = self._raw_get_tags(d)
 
