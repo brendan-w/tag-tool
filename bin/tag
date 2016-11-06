@@ -22,7 +22,7 @@ Options:
 \t--verbose   prints the new filepath for each renamed file
 \t--help      prints this help text and exits
 
-For issues and documentation: https://github.com/brendanwhitfield/tag-tool
+For issues and documentation: https://github.com/brendan-w/tag-tool
 """
 
 
