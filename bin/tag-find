@@ -5,7 +5,7 @@ import sys
 import subprocess
 from collections import namedtuple
 
-from tagtool import Filename
+from tagtool import Filename, get_config
 
 
 
@@ -42,15 +42,17 @@ EXCLUSION    = 2
 # constructs a find command based on the operations given
 # Note: The result of this command will contain several falsely selected
 # files, since it will also match substrings of tags.
-def build_command(operations):
+def build_command(operations, overrides):
+
+    config = get_config(overrides=overrides)
 
     find_flags = ""
 
     # chooses one of the following:
     # -name -iname -path -ipath
     flag = " -"
-    flag += "i" if not settings.case_sensitive else ""
-    flag += "path" if settings.use_dirs else "name"
+    flag += "i" if not config["case_sensitive"] else ""
+    flag += "path" if config["use_dirs"] else "name"
 
     for op in operations:
         if op.type == INCLUSION:
@@ -64,19 +66,27 @@ def build_command(operations):
             find_flags += " %s *%s*" % (flag, op.tag)
 
     # insert the selection flags into the main find command
-    return settings.find_cmd.format(dir=settings.root_dir, pattern=find_flags)
+
+    #                 root_dir          find_flags
+    find_cmd = ["find"]
+    find_cmd += [config["root_dir"]]
+    find_cmd += ["-type", "f"]
+    find_cmd += find_flags.split()
+    find_cmd += ["!", "(", "-path", "*/.*", "-perm", "-o=x", ")"]
+
+    return find_cmd
 
 
 # function that uses `find` to retrieve a basic list of files matching
 # the given tag selectors.
 # Note: see note for build_command()
-def find_base_files(operations):
+def find_base_files(operations, overrides):
 
-    cmd = build_command(operations)
+    cmd = build_command(operations, overrides)
 
     # run the find
     try:
-        b = subprocess.check_output(cmd.split(), universal_newlines=True)
+        b = subprocess.check_output(cmd, universal_newlines=True)
         return b.splitlines()
     except subprocess.CalledProcessError:
         print("Failed to execute 'find'")
@@ -85,9 +95,9 @@ def find_base_files(operations):
 
 # function to refine the selection based on the users instructions
 # returns boolean for whether the file was selected
-def match(filestr, operations):
+def match(filestr, operations, overrides):
 
-    f = Filename(filestr)
+    f = Filename(filestr, overrides)
 
     matched = True
 
@@ -111,20 +121,23 @@ def match(filestr, operations):
 
 # main selector function
 # runs a `find` command and then refines the search with tag matching
-def select(operations):
-    base_files = find_base_files(operations)
-    return [f for f in base_files if match(f, operations)]
+def select(operations, overrides):
+    base_files = find_base_files(operations, overrides)
+    return [f for f in base_files if match(f, operations, overrides)]
 
 
 def main():
     operations = []
+
+    # config params that will override the .tagdir params
+    overrides = {}
 
     for option in sys.argv[1:]:
         if option == "--help":
             print(help_text)
             return
         elif option == "--nocase":
-            settings.case_sensitive = False
+            overrides["case_sensitive"] = False
         else:
             if option[0] == "+":
                 operations.append(Operation(option[1:], INCLUSION))
@@ -144,7 +157,7 @@ def main():
     #     return
 
     # run the selection
-    files = select(operations)
+    files = select(operations, overrides)
     for f in files:
         print(f)
 

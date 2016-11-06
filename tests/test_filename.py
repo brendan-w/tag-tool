@@ -7,12 +7,6 @@ from tagtool import Filename, get_config
 # a default Filename object for testing with
 f = Filename("tree/a/a_b_c")
 
-# make sure that the config found the .tagdir
-assert(f.config["root_dir"]         == os.path.abspath("tree/"))
-assert(f.config["use_dirs"]         == True)
-assert(f.config["default_delim"]    == "_")
-assert(f.config["no_tags_filename"] == "unknown")
-assert(f.config["case_sensitive"]   == True)
 
 """
 tree/
@@ -56,6 +50,15 @@ def try_find_best_path(tags):
 """
 Private Filename functions
 """
+
+def test_config_loading():
+    # make sure that the config found the .tagdir
+    assert(f.config["root_dir"]         == os.path.abspath("tree/"))
+    assert(f.config["use_dirs"]         == True)
+    assert(f.config["default_delim"]    == "_")
+    assert(f.config["no_tags_filename"] == "unknown")
+    assert(f.config["case_sensitive"]   == True)
+
 
 def test_find_best_path():
 

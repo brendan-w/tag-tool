@@ -29,7 +29,6 @@ DEFAULT_CONFIG = {
     "tag_delims"       : " ,_&=.-+()[]{}/\\",
     "default_delim"    : "_",
     "no_tags_filename" : "unknown",
-    "find_cmd"         : "find {dir} -type f {pattern} ! -path */.* ! -perm -o=x",
     "case_sensitive"   : True
 }
 
@@ -37,8 +36,17 @@ DEFAULT_CONFIG = {
 def get_config(path="", overrides={}):
     config = DEFAULT_CONFIG.copy()
 
-    if path:
-        config["root_dir"] = find_above(path, TAGDIR_FILENAME)
+    # pick a root directory
+    # if no path is specified, use the CWD
+    # if no .tagdir is found, use the CWD
+    if not path:
+        path = os.path.abspath(".")
+
+    config["root_dir"] = find_above(path, TAGDIR_FILENAME)
+
+    if not config["root_dir"]:
+        config["root_dir"] = os.path.abspath(".")
+
 
     if config["root_dir"] != "":
         # load the config
@@ -53,7 +61,6 @@ def get_config(path="", overrides={}):
             config["tag_delims"]       = c.get("tag_delims",            config["tag_delims"])
             config["default_delim"]    = c.get("default_delim",         config["default_delim"])
             config["no_tags_filename"] = c.get("no_tags_filename",      config["no_tags_filename"])
-            config["find_cmd"]         = c.get("find_cmd",              config["find_cmd"])
             config["case_sensitive"]   = c.getboolean("case_sensitive", config["case_sensitive"])
 
     # process any commandline overrides we were given

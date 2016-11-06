@@ -11,7 +11,6 @@ def test_defaults():
     assert( c["tag_delims"] )
     assert( c["default_delim"] == "_" )
     assert( c["no_tags_filename"] == "unknown" )
-    assert( c["find_cmd"] and c["find_cmd"].startswith("find {dir} -type f {pattern}") )
     assert( c["case_sensitive"] == True )
 
 
@@ -25,5 +24,4 @@ def test_tagdir_lookup():
     assert( c["tag_delims"] )
     assert( c["default_delim"] == "_" )
     assert( c["no_tags_filename"] == "unknown" )
-    assert( c["find_cmd"] and c["find_cmd"].startswith("find {dir} -type f {pattern}") )
     assert( c["case_sensitive"] == True )

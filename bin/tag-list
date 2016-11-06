@@ -4,7 +4,7 @@ import os
 import re
 import sys
 
-from tagtool import Filename
+from tagtool import Filename, get_config
 
 
 help_text = """
@@ -19,12 +19,12 @@ For issues and documentation: https://github.com/brendanwhitfield/tag-tool
 """
 
 
-def run(files):
+def run(files, overrides):
 
     tags = set()
 
     for filestr in files:
-        f = Filename(filestr)
+        f = Filename(filestr, overrides)
         tags.update(f.get_tags())
         os.rename(filestr, str(f))
 
@@ -35,12 +35,14 @@ def run(files):
 def main():
     files = set()
 
+    overrides = {}
+
     for option in sys.argv[1:]:
         if option == "--help":
             print(help_text)
             return
         elif option == "--nocase":
-            settings.case_sensitive = False
+            overrides["case_sensitive"] = False
         elif os.path.isfile(option):
             files.add(option)
         else:
@@ -51,7 +53,7 @@ def main():
         return        
 
     # run the tagger
-    run(files)
+    run(files, overrides)
 
 if(__name__ == "__main__"):
     main()
