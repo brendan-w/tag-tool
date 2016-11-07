@@ -25,11 +25,12 @@ Settings
 
 DEFAULT_CONFIG = {
     "root_dir"         : "", # the directory containing the .tagdir file
-    "use_dirs"         : False,
+    "use_dirs"         : True,
     "tag_delims"       : " ,_&=.-+()[]{}/\\",
     "default_delim"    : "_",
     "no_tags_filename" : "unknown",
-    "case_sensitive"   : True
+    "case_sensitive"   : True,
+    "symlink_dir"      : "/tmp/tags"
 }
 
 

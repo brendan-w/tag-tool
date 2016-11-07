@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import re
+import os
 import sys
 import subprocess
 from collections import namedtuple
 
 from tagtool import Filename, get_config
+from tagtool.utils import empty_links_dir
 
 
 
@@ -42,9 +43,7 @@ EXCLUSION    = 2
 # constructs a find command based on the operations given
 # Note: The result of this command will contain several falsely selected
 # files, since it will also match substrings of tags.
-def build_command(operations, overrides):
-
-    config = get_config(overrides=overrides)
+def build_command(operations, config):
 
     find_flags = ""
 
@@ -80,9 +79,9 @@ def build_command(operations, overrides):
 # function that uses `find` to retrieve a basic list of files matching
 # the given tag selectors.
 # Note: see note for build_command()
-def find_base_files(operations, overrides):
+def find_base_files(operations, config):
 
-    cmd = build_command(operations, overrides)
+    cmd = build_command(operations, config)
 
     # run the find
     try:
@@ -95,9 +94,9 @@ def find_base_files(operations, overrides):
 
 # function to refine the selection based on the users instructions
 # returns boolean for whether the file was selected
-def match(filestr, operations, overrides):
+def match(filestr, operations, config):
 
-    f = Filename(filestr, overrides)
+    f = Filename(filestr, config)
 
     matched = True
 
@@ -121,13 +120,14 @@ def match(filestr, operations, overrides):
 
 # main selector function
 # runs a `find` command and then refines the search with tag matching
-def select(operations, overrides):
-    base_files = find_base_files(operations, overrides)
-    return [f for f in base_files if match(f, operations, overrides)]
+def select(operations, config):
+    base_files = find_base_files(operations, config)
+    return [f for f in base_files if match(f, operations, config)]
 
 
 def main():
     operations = []
+    symlink = False
 
     # config params that will override the .tagdir params
     overrides = {}
@@ -136,6 +136,8 @@ def main():
         if option == "--help":
             print(help_text)
             return
+        elif option == "--symlink":
+            symlink = True
         elif option == "--nocase":
             overrides["case_sensitive"] = False
         else:
@@ -157,9 +159,23 @@ def main():
     #     return
 
     # run the selection
-    files = select(operations, overrides)
-    for f in files:
-        print(f)
+    config = get_config(overrides=overrides)
+    files = select(operations, config)
+
+    if not symlink:
+        for f in files:
+            print(f)
+    else:
+        # empty the tmp directory
+        os.makedirs(config["symlink_dir"], exist_ok=True)
+        empty_links_dir(config["symlink_dir"])
+        for f in files:
+            # construct a pretty filename out of the original file's path
+            name = os.path.relpath(f, config["root_dir"])
+            name = name.replace("/", "-")
+            os.symlink(f, os.path.join(config["symlink_dir"], name))
+
+        print("Symlinked %d files" % len(files))
 
 
 if(__name__ == "__main__"):

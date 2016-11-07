@@ -1,6 +1,6 @@
 
-
 import os
+import shutil
 
 
 # recursively finds the nearest .tagdir file denoting the limit for moving files
@@ -17,3 +17,10 @@ def find_above(path, filename):
 # lists only directories at the given path
 def dirs_at(path):
     return [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
+
+# deletes all symlinks in the given directory [ USE WITH CAUTION ]
+def empty_links_dir(path):
+    for f in os.listdir(path):
+        file_path = os.path.join(path, f)
+        if os.path.islink(file_path):
+            os.unlink(file_path)
