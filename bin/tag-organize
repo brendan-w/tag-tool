@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+from tagtool import *
+
+help_text = """
+Usage:
+\ttag-organize [OPTION...]
+
+Options:
+\t--nocase    performs a case insensitive search
+\t--help      prints this help text and exits
+
+For issues and documentation: https://github.com/brendan-w/tag-tool
+"""
+
+
+# if there are only N files bearing a tag, DON'T make a directory
+MIN_FILES_FOR_DIRECTORY = 20
+
+# custom logic for ignoring certain tags
+def allowed_tag(tag, files):
+    return len(files) >= MIN_FILES_FOR_DIRECTORY and \
+           not tag.isdigit() and \
+           len(tag) > 1
+
+
+# partitions the files in the given directory
+# todo: make recursive
+def run(path, overrides):
+    
+    tags = {} # tag -> file set
+
+    print("discovering files...")
+
+    for f in find_all_files(path):
+        f = Filename(f, overrides)
+
+        for tag in f.get_tags():
+            if tag not in tags:
+                tags[tag] = set()
+            tags[tag].add(f)
+
+    print("pruning unique tags...")
+    tags = { k:v for k,v in tags.items() if allowed_tag(k, v) }
+
+    print("sorting sizes...")
+    tag_list = list(tags.keys())
+    tag_list.sort(key=lambda tag: len(tags[tag]))
+
+    print(tag_list)
+
+
+def main():
+    overrides = {}
+
+    for option in sys.argv[1:]:
+        if option == "--help":
+            print(help_text)
+            return
+        elif option == "--nocase":
+            overrides["case_sensitive"] = False
+        else:
+            print("'%s' is not a valid file" % option)
+
+    run("./", overrides)
+
+
+if(__name__ == "__main__"):
+    main()

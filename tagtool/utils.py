@@ -24,3 +24,10 @@ def empty_links_dir(path):
         file_path = os.path.join(path, f)
         if os.path.islink(file_path):
             os.unlink(file_path)
+
+def find_all_files(path):
+    files = set()
+    for root, directories, filenames in os.walk(path):
+        for f in filenames:
+            files.add(os.path.join(root, f))
+    return files

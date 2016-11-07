@@ -16,7 +16,7 @@ setup(
     keywords="file tag tagging rename",
     author="Brendan Whitfield",
     author_email="brendanw@windworksdesign.com",
-    url="http://github.com/brendanwhitfield/tag-tool",
+    url="http://github.com/brendan-w/tag-tool",
     license="GNU GPLv2",
     packages=find_packages(),
     include_package_data=True,
@@ -26,6 +26,7 @@ setup(
         'bin/tag',
         'bin/tag-find',
         'bin/tag-list',
+        'bin/tag-organize',
         'bin/tag-dialog',
     ],
 )
