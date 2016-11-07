@@ -73,7 +73,7 @@ def main():
             # construct a pretty filename out of the original file's path
             name = os.path.relpath(str(f), config["root_dir"])
             name = name.replace("/", config["default_delim"])
-            os.symlink(f, os.path.join(config["symlink_dir"], name))
+            os.symlink(str(f), os.path.join(config["symlink_dir"], name))
 
         print("Symlinked %d files into %s" % (len(files), config["symlink_dir"]))
 

@@ -98,4 +98,10 @@ def match(f, operations, config):
 # runs a `find` command and then refines the search with tag matching
 def select(operations, config):
     base_files = find_base_files(operations, config)
-    return [f for f in base_files if match(Filename(f, config), operations, config)]
+    results = []
+    for f in base_files:
+        f = Filename(f, config)
+        if match(f, operations, config):
+            results.append(f)
+
+    return results
